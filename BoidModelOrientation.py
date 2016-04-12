@@ -2,7 +2,7 @@ import pygame, sys
 from pygame.locals import *
 import random as rand
 import math
-from utils import *
+from BoidModelOrientationUtils import *
 
 #Number of frames per second
 FPS = 30
@@ -11,6 +11,7 @@ FPS = 30
 
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
+#Set this to true if you want to view full screened. 
 isBigWindow = False
 if isBigWindow:
     WINDOWWIDTH = 1920
@@ -38,19 +39,20 @@ GREEN =    (0,255,0)
 
 #Configurations
 BIRDCOLOR = BLACK
-BIRDCOUNT = 10
+BIRDCOUNT = 30
 BIRDTOLERANCE = 20
 BIRDTOUCHINGTOLERANCE = 5
+
 #How much weight it gives to various parts of it's life
 
 #How much it wants to preserve it's initial velocity
 weightMoveOriginalOrientation = 1
 #How much it wants to move towards the center of the cluster
-weightMoveTowardsCenter = 0
+weightMoveTowardsCenter = 1
 #How much it wants to move away from other birds
-globalweightMoveAwayFromOthers = 0
+globalweightMoveAwayFromOthers = 1
 #How much it tries to orientate itself the same way all other birds are orientatd
-weightMoveTowardsTotalOrientation = 0
+weightMoveTowardsTotalOrientation = 1
 #How much it tries to orientate itself the same way birds around it are oreintated
 weightMoveTowardsLocalOrientation = 1
 
@@ -59,11 +61,11 @@ weightMoveTowardsLocalOrientation = 1
 modifyingOrientation = True
 modifyingVelocity = True
 
-#This influences how large the boids will be
+#This influences how large the boids will be drawn (purely cosmetic)
 step = 10
 
 
-#Options are circle or polygon
+#Options are simply circles or rotating polygons
 #BIRDSHAPE = "circle"
 #BIRDSHAPE = "polygon"
 BIRDSHAPE = "polygonrotate"
@@ -207,16 +209,12 @@ class BoidArray(object):
                     totalWeight = weightMoveOriginalOrientation + weightMoveTowardsCenter + weightMoveAwayFromOthers + weightMoveTowardsTotalOrientation + weightMoveTowardsLocalOrientation
                     newOrientation = (weightMoveOriginalOrientation*o + weightMoveTowardsCenter*orientationToCenter + weightMoveAwayFromOthers * orientationAwayFromLocalCenter + weightMoveTowardsTotalOrientation*orientationOfAll + weightMoveTowardsLocalOrientation*orientationOfLocal)/totalWeight
                     #used for going away from walls
-                    #xytuple = xycof(boid,MAXX,MAXY)
                     
                     print "------------------"
                     print "New orientation %f" %(newOrientation)
                     print "Orientation of all %f" % (orientationOfAll)
                     #print boid
-                    #boid.orientation = newOrientation % (2*math.pi)
                     boid.orientation = newOrientation
-                    #print "New self orientation %f" % (boid.orientation)
-                    #o = (o+1.2*orientationToCenter + 2.8*orientationAwayFromLocalCenter)/4
                 if modifyingVelocity:
                     localVelocity = self.getLocalVelocity(boid,BIRDTOLERANCE)
                     boid.velocity = (localVelocity + boid.velocity)/2
@@ -309,10 +307,11 @@ def main():
     boidInit.append(Boid(.4,math.pi/2,Position(40,15)))
     boidInit.append(Boid(.4,.0 ,Position(26,15)))
     boidInit.append(Boid(.4,.5 + math.pi,Position(43,20)))
-    #boidInit.append(Boid(.4,.5 + math.pi,Position(35,22)))
-    
-    boidArray = BoidArray(BoidInitList = boidInit)
-    #boidArray = BoidArray()
+    boidInit.append(Boid(.4,.5 + math.pi,Position(35,22)))
+    #------BOID ARRAY INITIALIZATION OPTIONS------
+    #If you chose to 
+    #boidArray = BoidArray(BoidInitList = boidInit)
+    boidArray = BoidArray()
     boidArray.drawBoids()
 
     pygame.display.update()
