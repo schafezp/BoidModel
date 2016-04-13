@@ -1,13 +1,5 @@
 import math
-class Position(object):
-    def __init__(self,x,y,isNull=False):
-        self.x = x
-        self.y = y
-        self.isNull = isNull
-class Vector(object):
-    def __init__(self,x,y,isNull=False):
-        self.x = x
-        self.y = y
+from BoidModel import Position, Boid, Vector
 def getCenterPoint(boidArray):
         totalX = 0
         totalY = 0
@@ -71,5 +63,27 @@ def xycof(boid,MAXX, MAXY):
 def sumVectorPosition(p,v):
  return Position(p.x+v.x, p.y + v.y)
 
-def addVector(v1,v2):
-    return Vector(v1.x+v2.x, v1.y+v2.y)
+
+def addVectors(*vs):
+    """ Takes a list of vectors and returns their sum as a vector"""
+    xsum = 0
+    ysum = 0
+    #print "Vs"
+    #print vs
+    for v in vs:
+        #print v
+        xsum += v.x
+        ysum += v.y
+    return Vector(xsum,ysum)
+def vectorSubtract(v1,v2):
+    """Return v1-v2"""
+    vx = v1.x-v2.x
+    vy = v1.y-v2.y
+    return Vector(vx,vy)
+
+def getVectorBetweenPoints(p1,p2):
+    """ Returns the vector that takes us from  p1 to p2 """
+    return Vector(p2.x-p1.x,p2.y-p1.y)
+def getOrientationFromVector(v):
+    #TODO: return atan thing
+    return math.atan2(v.y,v.x)

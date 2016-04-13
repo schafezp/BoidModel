@@ -4,14 +4,15 @@ import random as rand
 import math
 from utils import *
 
+
 #Number of frames per second
-FPS = 20
+FPS = 25
 
 ###Sets size of grid
 
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
-isBigWindow = False
+isBigWindow = True
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
@@ -42,33 +43,22 @@ GREEN =    (0,255,0)
 BIRDCOLOR = BLACK
 BIRDCOUNT = 10
 BIRDTOLERANCE = 20
-BIRDTOUCHINGTOLERANCE = 5
+BIRDTOUCHINGTOLERANCE = 7
 #How much weight it gives to various parts of it's life
+dampenMovementOfAllBoids = 1.00
+dampenMovementTowardsCenter = 100
+dampenForceRepellingBoidsfromOtherBoids = 10
+dampenAveragingVelocityEffect = 30
 
-#How much it wants to preserve it's initial velocity
-weightMoveOriginalOrientation = 1
-#How much it wants to move towards the center of the cluster
-weightMoveTowardsCenter = 0
-#How much it wants to move away from other birds
-globalweightMoveAwayFromOthers = 0
-#How much it tries to orientate itself the same way all other birds are orientatd
-weightMoveTowardsTotalOrientation = 0
-#How much it tries to orientate itself the same way birds around it are oreintated
-weightMoveTowardsLocalOrientation = 1
-
-#If modifying orientation is set to false all birds will fly away
-#in their initial direction
-modifyingOrientation = True
-modifyingVelocity = True
-
+velocityLimit = 2
 #This influences how large the boids will be
 step = 10
 
 
 #Options are circle or polygon
-BIRDSHAPE = "circle"
+#BIRDSHAPE = "circle"
 #BIRDSHAPE = "polygon"
-#BIRDSHAPE = "polygonrotate"
+BIRDSHAPE = "polygonrotate"
 class Position(object):
     def __init__(self,x,y,isNull=False):
         self.x = x
@@ -83,7 +73,19 @@ class Vector(object):
         self.x = x
         self.y = y
     def __str__(self):
-        return "I am a velocity at (%d,%d)"%(self.x,self.y)
+        return "I am a velocity at (%f,%f)"%(self.x,self.y)
+    def divideby(self,divisor):
+        self.x = self.x/divisor
+        self.y = self.y/divisor
+        return self
+    def multiplyby(self,multiplier):
+        self.x = self.x*multiplier
+        self.y = self.y*multiplier
+        return self
+    def magnitude(self):
+        return math.sqrt(self.x**2 + self.y**2)
+    
+
 
 
 class BoidArray(object):
@@ -107,28 +109,76 @@ class BoidArray(object):
         self.boidArray.append(boid)
     def len(self):
         return len(self.boidArray)
-
-    def getCenterPointOfAll(self):
-        return getCenterPoint(self.boidArray)
-    def getCenterPointOfAllExcept(self,boidExcept):
+    def getAllBoidsExcept(self,boidExcept):
         boidArrayWithoutBoid = []
         for boid in self.boidArray:
             if boid != boidExcept:
                 boidArrayWithoutBoid.append(boid)
-
+        return boidArrayWithoutBoid
+    def getCenterPointOfAll(self):
+        return getCenterPoint(self.boidArray)
+    def getCenterPointOfAllExcept(self,boidExcept):
+        boidArrayWithoutBoid = self.getAllBoidsExcept(boidExcept)
         return getCenterPoint(boidArrayWithoutBoid)
-    def getVector(self,p1,p2):
-        #Vector from p1 to p2
-
-        return Vector(p2.x-p1.x,p2.y-p1.y)
+    # ---------------Velocity Model Functions---------
+    #
     def getVectorToCenter(self,boid):
         centerpoint = self.getCenterPointOfAllExcept(boid)
-        return self.getVector(boid.position,centerpoint)
-    def getOrientationOfAll(self):
-        #here o is the total orientation. We're averaging them all together
-        return getOrientationOfBoids(self.boidArray)
+        return getVectorBetweenPoints(boid.position,centerpoint)
+
+    def getVectorAwayFromBoid(self,selfboid):
+        #v is the vector we will return
+        v = Vector(0,0)
+        #TODO: Maybe this line will run slow because we create lots of new lists
+        for boid in self.getAllBoidsExcept(selfboid):
+            if distance(selfboid.position, boid.position) < BIRDTOUCHINGTOLERANCE:
+                dispv = vectorSubtract(selfboid.position,boid.position)
+                v = addVectors(v,dispv)
+                
+        return v
+
+    def getVelocityOfOthersAround(self,selfboid):
+        v = Vector(0,0)
+        otherBoids = self.getAllBoidsExcept(selfboid)
+        for boid in otherBoids:
+            v = addVectors(v,boid.velocity)
+
+        if len(otherBoids) == 0:
+            return v
+        
+        v.divideby(len(otherBoids))
+        #Add the difference between these velocity vectors
+        v = vectorSubtract(v,selfboid.velocity)
+        return v
+
+    def boundPosition(self,selfboid):
+        v = Vector(0,0)
+        pullBackVelocity = .5
+        ## xspan = MAXX-MINX
+        ## yspan = MAXY-MINY
+        ## if selfboid.position.x < MINX:
+        ##     v.x = pullBackVelocity + (selfboid.position.x - MINX) / xspan
+        ## elif selfboid.position.x > MAXX:
+        ##     v.x = -(pullBackVelocity + (selfboid.position.x - MAXX) / xspan)
+        ## if selfboid.position.y < MINY:
+        ##     v.y = pullBackVelocity + (selfboid.position.y - MINY) / yspan
+        ## elif selfboid.position.y > MAXY:
+        ##     v.y = -(pullBackVelocity + (selfboid.position.y - MAXY) / yspan)
+        if selfboid.position.x < MINX:
+            v.x = pullBackVelocity
+        elif selfboid.position.x > MAXX:
+            v.x = -pullBackVelocity
+        if selfboid.position.y < MINY:
+            v.y = pullBackVelocity
+        elif selfboid.position.y > MAXY:
+            v.y = -pullBackVelocity
+
+        return v
 
     
+    #
+    # ---------------Velocity Model Functions---------
+
     def getLocalCenter(self,selfboid,tolerance):
         #Here centerBoid is the boid we are looking to find the local neighborhood of
         cp = selfboid.position
@@ -145,32 +195,6 @@ class BoidArray(object):
             centerPoint = getCenterPoint(localBoids)
             
         return centerPoint
-    def getLocalVelocity(self,selfBoid,tolerance):
-        #Here centerBoid is the boid we are looking to find the local neighborhood of
-        #
-        cv = selfBoid.velocity
-        localBoids = self.getBoidsAround(selfBoid,tolerance)
-        avgV = 0;
-        for boid in localBoids:
-            avgV = avgV + boid.velocity
-
-        numberOfBoids =len(localBoids)
-        if numberOfBoids == 0:
-            print "No boids getLocalVelocity"
-            return
-
-        return avgV/numberOfBoids
-
-
-        return centerPoint
-    def getBoidsAround(self,selfBoid,tolerance):
-        nearbyeBoids = []
-        cp = selfBoid.position
-        for boid in self.boidArray:
-            p = boid.position
-            if distance(p,cp) < tolerance:
-                nearbyeBoids.append(boid)
-        return nearbyeBoids
 
     def drawBoids(self):
         for boid in self.boidArray:
@@ -206,23 +230,34 @@ class BoidArray(object):
                 #v1 is current velocity vector
                 v1 = boid.velocity
                 v2 = self.getVectorToCenter(boid)
-
-                #boid.velocity = addVector(v1,v2)
-                boid.velocity = v1
-                print boid.velocity
-                boid.position = sumVectorPosition(boid.position,boid.velocity)
+                v3 = self.getVectorAwayFromBoid(boid)
+                v4 = self.getVelocityOfOthersAround(boid)
+                v5 = self.boundPosition(boid)
+                #v6 is a heavy wind
+                v6 = Vector(-0.03,0)
+                #Apply parameter weightings
+                v1.divideby(dampenMovementOfAllBoids)
+                v2.divideby(dampenMovementTowardsCenter)
+                v3.divideby(dampenForceRepellingBoidsfromOtherBoids)
+                v4.divideby(dampenAveragingVelocityEffect)
                 
+                boid.velocity = addVectors(v1,v2,v3,v4,v5)
+                boid.limit_velocity()
+                #boid.velocity = addVectors(v1,v2,v3,v4,v5)
+                #boid.velocity = addVectors(v1)
+                #boid.velocity = v1
+                print "--------------------"
+                
+                
+                boid.position = sumVectorPosition(boid.position,boid.velocity)
+
                 print boid
-                print boid.velocity.x
-                print boid.velocity.y
                 ## p.x = p.x + newX if self.isUniquePoint(Position(p.x + newX,p.y)) else p.x
                 ## p.y = p.y + newY if self.isUniquePoint(Position(p.x,p.y + newY)) else p.y
-
-
-                #print boid
-                if p.x > MAXX or p.y > MAXY or p.x < MINX or p.y < MINY:
-                    print "A poor boid died today"
-                    self.boidArray.remove(boid)
+                #Kill boids if they outside of the bounds
+                ## if p.x > MAXX or p.y > MAXY or p.x < MINX or p.y < MINY:
+                ##     print "A poor boid died today"
+                ##     self.boidArray.remove(boid)
         #The last thing that we do in our tick is render the boids.
         #Before we render we choose to wipe the screen blank.
         DISPLAYSURF.fill(WHITE)
@@ -250,21 +285,25 @@ class Boid(object):
             self.velocity = velocity
         
     def __repr__(self):
-        return 'I am a boid centered at %d,%d going (%d,%d)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
+        return 'I am a boid centered at %d,%d going (%f,%f)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
+    def limit_velocity(self):
+        vMagnitude = self.velocity.magnitude()
+        if  vMagnitude > velocityLimit:
+            self.velocity = (self.velocity.divideby(vMagnitude)).multiplyby(velocityLimit)
     def draw_self(self):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
 
         if BIRDSHAPE == "polygonrotate":
             center = (xRenderPos,yRenderPos)
-
+            orientation = getOrientationFromVector(self.velocity)
             tp1 = (step,0)
             tp2 = (0,step)
             tp3 = (0,-step)
             #print "Orientation is %f" %(self.orientation)
-            tp1 = transform(tp1,self.orientation,center)
-            tp2 = transform(tp2,self.orientation,center)
-            tp3 = transform(tp3,self.orientation,center)
+            tp1 = transform(tp1,orientation,center)
+            tp2 = transform(tp2,orientation,center)
+            tp3 = transform(tp3,orientation,center)
             trianglePoints = (tp1,tp2,tp3)
 
             pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,trianglePoints, CELLSIZE/2)
@@ -289,7 +328,7 @@ def main():
     #When no parameters are passed BoidArray is initialized with 15 boids
     #boidArray = BoidArray(SimilarDirection=True)
     boidInit = []
-    #boidInit.append(Boid(.4,.3 + math.pi ,Position(55,15)))    
+    #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))    
     #boidArray = BoidArray(BoidInitList = boidInit)
     boidArray = BoidArray()
     boidArray.drawBoids()
