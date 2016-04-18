@@ -10,9 +10,9 @@ FPS = 25
 
 ###Sets size of grid
 
-WINDOWWIDTH = 640
-WINDOWHEIGHT = 480
-isBigWindow = True
+WINDOWWIDTH = 840
+WINDOWHEIGHT = 680
+isBigWindow = False
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
@@ -37,18 +37,24 @@ MINVELOCITY = .1
 BLACK =    (0,  0,  0)
 WHITE =    (255,255,255)
 DARKGRAY = (40, 40, 40)
+RED =      (255,0,0)
+BLUE =      (0,0,255)
 GREEN =    (0,255,0)
 
 #Configurations
 BIRDCOLOR = BLACK
-BIRDCOUNT = 10
+BIRDCOUNT = 20
 BIRDTOLERANCE = 20
-BIRDTOUCHINGTOLERANCE = 7
+BIRDTOUCHINGTOLERANCE = 5
+
+COLLISIONAVOIDANCE = 0 # 0 is ours, 1 is from paper
+MAX_SEE_AHEAD = 10
 #How much weight it gives to various parts of it's life
 dampenMovementOfAllBoids = 1.00
 dampenMovementTowardsCenter = 100
-dampenForceRepellingBoidsfromOtherBoids = 10
+dampenForceRepellingBoidsfromOtherBoids = 20
 dampenAveragingVelocityEffect = 30
+dampenWillOfBoidstoDie = 1
 
 velocityLimit = 2
 #This influences how large the boids will be
@@ -84,15 +90,45 @@ class Vector(object):
         return self
     def magnitude(self):
         return math.sqrt(self.x**2 + self.y**2)
+    def unitize(self):
+        return self.divideby(self.magnitude())
+    def clone(self):
+        return Vector(self.x,self.y)
+    def negate(self):
+        return self.multiplyby(-1)
     
-
-
-
+class Obstacle(object):
+    def __init__(self,position,radius,color):
+        self.position = position
+        self.radius = radius
+        self.color = color
+    def draw_self(self):
+        xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
+        yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
+        pygame.draw.circle(DISPLAYSURF, self.color,(xRenderPos,yRenderPos), self.radius)
+        
+class ObstacleArray(object):
+    def __init__(self,obstacleArray=[]):
+        self.obstacleArray = obstacleArray
+    def drawObstacles(self):
+        for obstacle in self.obstacleArray:
+            obstacle.draw_self()
+    def boidInObstacle(self,boid):
+        return positionInObstacle(boid.position)
+    def positionInObstacle(self,position):
+        for obstacle in self.obstacleArray:
+            if distance(position,obstacle.position) <= obstacle.radius/CELLSIZE:
+                return True
+        return False
+    def getObstacles(self):
+        return self.obstacleArray
+    
 class BoidArray(object):
     """A boid array holds all of the boids which live in the universe """
-    def __init__(self,SimilarDirection=False,BoidInitList=[]):
+    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray()):
         self.boidArray = []
         self.numberOfBoids = BIRDCOUNT
+        self.obstacleArray = ObstacleInitList
         if len(BoidInitList) > 0:
             self.boidArray = BoidInitList
         else:
@@ -175,7 +211,36 @@ class BoidArray(object):
 
         return v
 
-    
+    def getVectorAwayFromObstacles(self,selfboid):
+        v = Vector(0,0)
+        if COLLISIONAVOIDANCE == 0:
+            obstacles = self.obstacleArray.getObstacles()
+            for obstacle in obstacles:
+                vbetween = getVectorBetweenPoints(obstacle.position,selfboid.position)
+                vToRemove = vbetween.clone().unitize().multiplyby(obstacle.radius)
+                v = addVectors(vbetween,vToRemove.negate())
+                dbetween = v.magnitude()
+                #d = (math.exp((MAXX-MINX)/dbetween))
+                #d = (math.exp((MAXX-MINX)/dbetween))
+                d = dbetween**2
+                print 'dbetween is %f modified d is %f' % (dbetween,d)
+                v = addVectors(v,v.multiplyby(dampenWillOfBoidstoDie/d))
+                #v = v.multiplyby(dampenWillOfBoidstoDie/(dbetween*dbetween))
+                print 'Vector away is %s' %v
+        elif COLLISIONAVOIDANCE == 1:
+            #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
+            vahead = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD)
+            vahead2 = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD/2)
+            pahead = sumVectorPosition(selfboid.position,vahead)
+            if self.obstacleArray.positionInObstacle(pahead):
+                
+            
+        return v
+
+
+    def killBoidIfInObstacle(self,boid):
+        if self.obstacleArray.boidInObstacle(boid):
+                self.boidArray.remove(boid)
     #
     # ---------------Velocity Model Functions---------
 
@@ -233,15 +298,18 @@ class BoidArray(object):
                 v3 = self.getVectorAwayFromBoid(boid)
                 v4 = self.getVelocityOfOthersAround(boid)
                 v5 = self.boundPosition(boid)
+                v6 = self.getVectorAwayFromObstacles(boid)
                 #v6 is a heavy wind
-                v6 = Vector(-0.03,0)
+                #v6 = Vector(-0.03,0)
                 #Apply parameter weightings
+                #print "Vi is"
+                print v1
                 v1.divideby(dampenMovementOfAllBoids)
                 v2.divideby(dampenMovementTowardsCenter)
                 v3.divideby(dampenForceRepellingBoidsfromOtherBoids)
                 v4.divideby(dampenAveragingVelocityEffect)
                 
-                boid.velocity = addVectors(v1,v2,v3,v4,v5)
+                boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
                 boid.limit_velocity()
                 #boid.velocity = addVectors(v1,v2,v3,v4,v5)
                 #boid.velocity = addVectors(v1)
@@ -250,7 +318,7 @@ class BoidArray(object):
                 
                 
                 boid.position = sumVectorPosition(boid.position,boid.velocity)
-
+                self.killBoidIfInObstacle(boid)
                 print boid
                 ## p.x = p.x + newX if self.isUniquePoint(Position(p.x + newX,p.y)) else p.x
                 ## p.y = p.y + newY if self.isUniquePoint(Position(p.x,p.y + newY)) else p.y
@@ -262,6 +330,7 @@ class BoidArray(object):
         #Before we render we choose to wipe the screen blank.
         DISPLAYSURF.fill(WHITE)
         self.drawBoids()
+        self.obstacleArray.drawObstacles()
 class Boid(object):
     """ A boid is an independent entity which moves thorugh the world"""
     #Velocity will be in speed/time
@@ -330,8 +399,22 @@ def main():
     boidInit = []
     #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))    
     #boidArray = BoidArray(BoidInitList = boidInit)
-    boidArray = BoidArray()
+    p = 20
+    radius = 30
+    ## o1 = Obstacle(Position(0,10),radius,GREEN)
+    ## o2 = Obstacle(Position(10,0),radius,DARKGRAY)
+    ## obsticleArray = ObstacleArray([o1,o2])
+    o1 = Obstacle(Position(-p,-p),radius,GREEN)
+    o2 = Obstacle(Position(-p,p),radius,GREEN)
+    o3 = Obstacle(Position(p,p),radius,GREEN)
+    o4 = Obstacle(Position(p,-p),radius,GREEN)
+
+    ## obsticleArray = ObstacleArray([o1,o3])
+    obsticleArray = ObstacleArray([o1,o4])
+    boidArray = BoidArray(ObstacleInitList=obsticleArray)
+    #boidArray = BoidArray()
     boidArray.drawBoids()
+    
 
     pygame.display.update()
     #NumberOfBoids = 15
