@@ -87,3 +87,5 @@ def getVectorBetweenPoints(p1,p2):
 def getOrientationFromVector(v):
     #TODO: return atan thing
     return math.atan2(v.y,v.x)
+def dotProduct(v1,v2):
+    return v1.x*v2.x + v1.y*v2.y
