@@ -12,7 +12,7 @@ FPS = 30
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
 #Set this to true if you want to view full screened. 
-isBigWindow = False
+isBigWindow = True
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
@@ -39,7 +39,7 @@ GREEN =    (0,255,0)
 
 #Configurations
 BIRDCOLOR = BLACK
-BIRDCOUNT = 30
+BIRDCOUNT = 50
 BIRDTOLERANCE = 20
 BIRDTOUCHINGTOLERANCE = 5
 
@@ -270,7 +270,7 @@ class Boid(object):
 
         if BIRDSHAPE == "polygonrotate":
             center = (xRenderPos,yRenderPos)
-
+            
             tp1 = (step,0)
             tp2 = (0,step)
             tp3 = (0,-step)

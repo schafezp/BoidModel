@@ -12,12 +12,13 @@ FPS = 25
 
 WINDOWWIDTH = 840
 WINDOWHEIGHT = 680
-isBigWindow = False
+isBigWindow = True
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
 
-CELLSIZE = 10
+#CELLSIZE = 10
+CELLSIZE = 8
 
 #Check to see if the width and height are multiples of the cell size.
 assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell size"
@@ -43,20 +44,27 @@ GREEN =    (0,255,0)
 
 #Configurations
 BIRDCOLOR = BLACK
+DEADBIRDCOLOR = RED
 BIRDCOUNT = 20
-BIRDTOLERANCE = 20
-BIRDTOUCHINGTOLERANCE = 5
+BOID_TOLERANCE = 20
+BIRD_TOUCHING_TOLERANCE = 5
 
-COLLISIONAVOIDANCE = 0 # 0 is ours, 1 is from paper
-MAX_SEE_AHEAD = 10
+COLLISIONAVOIDANCE = 1 # 0 is our original, 1 is from paper
+#Determines how boids avoid obstacles
+MAX_SEE_AHEAD = 20
+MAX_AVOID_FORCE = 3
+
+#Bounds the bird to the window
+FORCE_RETURN_TO_WINDOW = .3
+
 #How much weight it gives to various parts of it's life
 dampenMovementOfAllBoids = 1.00
-dampenMovementTowardsCenter = 100
-dampenForceRepellingBoidsfromOtherBoids = 20
+dampenMovementTowardsCenter = 30
+dampenForceRepellingBoidsfromOtherBoids = 40
 dampenAveragingVelocityEffect = 30
-dampenWillOfBoidstoDie = 1
+dampenWillOfBoidstoDie = 2
 
-velocityLimit = 2
+velocityLimit = 1.5
 #This influences how large the boids will be
 step = 10
 
@@ -72,6 +80,11 @@ class Position(object):
         self.isNull = isNull
     def __repr__(self):
         return "I am a position at (%d,%d)"%(self.x,self.y)
+    def negate(self):
+        self.x = -x
+        self.y = -y
+    def clone(self):
+        return Position(self.x,self.y)
 
 
 class Vector(object):
@@ -94,7 +107,7 @@ class Vector(object):
         return self.divideby(self.magnitude())
     def clone(self):
         return Vector(self.x,self.y)
-    def negate(self):
+    def negate(self): 
         return self.multiplyby(-1)
     
 class Obstacle(object):
@@ -106,7 +119,11 @@ class Obstacle(object):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
         pygame.draw.circle(DISPLAYSURF, self.color,(xRenderPos,yRenderPos), self.radius)
-        
+    def positionInObstacle(self,position):
+        if distance(position,self.position) <= self.radius/CELLSIZE:
+            return True
+        else:
+            return False
 class ObstacleArray(object):
     def __init__(self,obstacleArray=[]):
         self.obstacleArray = obstacleArray
@@ -114,10 +131,10 @@ class ObstacleArray(object):
         for obstacle in self.obstacleArray:
             obstacle.draw_self()
     def boidInObstacle(self,boid):
-        return positionInObstacle(boid.position)
-    def positionInObstacle(self,position):
+        return self.positionInObstacles(boid.position)
+    def positionInObstacles(self,position):
         for obstacle in self.obstacleArray:
-            if distance(position,obstacle.position) <= obstacle.radius/CELLSIZE:
+            if obstacle.positionInObstacle(position):
                 return True
         return False
     def getObstacles(self):
@@ -125,10 +142,11 @@ class ObstacleArray(object):
     
 class BoidArray(object):
     """A boid array holds all of the boids which live in the universe """
-    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray()):
+    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[]):
         self.boidArray = []
         self.numberOfBoids = BIRDCOUNT
         self.obstacleArray = ObstacleInitList
+        self.deadBoids = DeadBoids
         if len(BoidInitList) > 0:
             self.boidArray = BoidInitList
         else:
@@ -167,7 +185,7 @@ class BoidArray(object):
         v = Vector(0,0)
         #TODO: Maybe this line will run slow because we create lots of new lists
         for boid in self.getAllBoidsExcept(selfboid):
-            if distance(selfboid.position, boid.position) < BIRDTOUCHINGTOLERANCE:
+            if distance(selfboid.position, boid.position) < BIRD_TOUCHING_TOLERANCE:
                 dispv = vectorSubtract(selfboid.position,boid.position)
                 v = addVectors(v,dispv)
                 
@@ -189,25 +207,25 @@ class BoidArray(object):
 
     def boundPosition(self,selfboid):
         v = Vector(0,0)
-        pullBackVelocity = .5
+        
         ## xspan = MAXX-MINX
         ## yspan = MAXY-MINY
         ## if selfboid.position.x < MINX:
-        ##     v.x = pullBackVelocity + (selfboid.position.x - MINX) / xspan
+        ##     v.x = FORCE_RETURN_TO_WINDOW + (selfboid.position.x - MINX) / xspan
         ## elif selfboid.position.x > MAXX:
-        ##     v.x = -(pullBackVelocity + (selfboid.position.x - MAXX) / xspan)
+        ##     v.x = -(FORCE_RETURN_TO_WINDOW + (selfboid.position.x - MAXX) / xspan)
         ## if selfboid.position.y < MINY:
-        ##     v.y = pullBackVelocity + (selfboid.position.y - MINY) / yspan
+        ##     v.y = FORCE_RETURN_TO_WINDOW + (selfboid.position.y - MINY) / yspan
         ## elif selfboid.position.y > MAXY:
-        ##     v.y = -(pullBackVelocity + (selfboid.position.y - MAXY) / yspan)
+        ##     v.y = -(FORCE_RETURN_TO_WINDOW + (selfboid.position.y - MAXY) / yspan)
         if selfboid.position.x < MINX:
-            v.x = pullBackVelocity
+            v.x = FORCE_RETURN_TO_WINDOW
         elif selfboid.position.x > MAXX:
-            v.x = -pullBackVelocity
+            v.x = -FORCE_RETURN_TO_WINDOW
         if selfboid.position.y < MINY:
-            v.y = pullBackVelocity
+            v.y = FORCE_RETURN_TO_WINDOW
         elif selfboid.position.y > MAXY:
-            v.y = -pullBackVelocity
+            v.y = -FORCE_RETURN_TO_WINDOW
 
         return v
 
@@ -222,17 +240,46 @@ class BoidArray(object):
                 dbetween = v.magnitude()
                 #d = (math.exp((MAXX-MINX)/dbetween))
                 #d = (math.exp((MAXX-MINX)/dbetween))
-                d = dbetween**2
+                #d = dbetween**2
+                d = math.exp(dbetween)
                 print 'dbetween is %f modified d is %f' % (dbetween,d)
-                v = addVectors(v,v.multiplyby(dampenWillOfBoidstoDie/d))
+                v = v.multiplyby(dampenWillOfBoidstoDie/d)
                 #v = v.multiplyby(dampenWillOfBoidstoDie/(dbetween*dbetween))
                 print 'Vector away is %s' %v
         elif COLLISIONAVOIDANCE == 1:
             #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
-            vahead = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD)
-            vahead2 = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD/2)
+            dynamic_legth = selfboid.velocity.magnitude()/MAXVELOCITY
+            dynamic_legth*dampenWillOfBoidstoDie
+            vahead = selfboid.velocity.clone().unitize().multiplyby(dynamic_legth)
+            vahead2 = selfboid.velocity.clone().unitize().multiplyby(dynamic_legth/2)
+            vahead3 = selfboid.velocity.clone().unitize().multiplyby(dynamic_legth/6)
+            #vahead = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD)
+            #vahead2 = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD/2)
             pahead = sumVectorPosition(selfboid.position,vahead)
-            if self.obstacleArray.positionInObstacle(pahead):
+            pahead2 = sumVectorPosition(selfboid.position,vahead2)
+            pahead3 = sumVectorPosition(selfboid.position,vahead3)
+            obstacles = self.obstacleArray.getObstacles()
+            blockingObstacles = []
+            for obstacle in obstacles:
+                if obstacle.positionInObstacle(pahead) or obstacle.positionInObstacle(pahead2) or obstacle.positionInObstacle(pahead3):
+                    blockingObstacles.append(obstacle)
+
+            if len(blockingObstacles) == 0:
+                return v
+            else:
+                minDistance = distance(selfboid.position, blockingObstacles[0].position)
+                blockingObstacle = blockingObstacles[0]
+                #fine closests obstacle
+                for obstacle in blockingObstacles:
+                    #TODO: We might want to have this distance by pahead2
+                    d = distance(pahead, obstacle.position)
+                    if d <minDistance:
+                        blockingObstacle = obstacle
+                        minDistance = d
+                #v = sumVectorPosition(blockingObstacle.position.clone().negate(),vahead)
+                v.x = vahead.x - blockingObstacle.position.x
+                v.y = vahead.y - blockingObstacle.position.y
+                v.unitize().multiplyby(MAX_AVOID_FORCE)
                 
             
         return v
@@ -240,7 +287,9 @@ class BoidArray(object):
 
     def killBoidIfInObstacle(self,boid):
         if self.obstacleArray.boidInObstacle(boid):
-                self.boidArray.remove(boid)
+            boid.isDead=True
+            self.deadBoids.append(boid)
+            self.boidArray.remove(boid)
     #
     # ---------------Velocity Model Functions---------
 
@@ -262,8 +311,14 @@ class BoidArray(object):
         return centerPoint
 
     def drawBoids(self):
+        #draw all live boids
         for boid in self.boidArray:
             boid.draw_self()
+            
+        #draw all dead boids
+        for boid in self.deadBoids:
+            boid.draw_self()
+            
     def isUniquePoint(self,position):
         isUnique = 1
         for boid in self.boidArray:
@@ -308,35 +363,33 @@ class BoidArray(object):
                 v2.divideby(dampenMovementTowardsCenter)
                 v3.divideby(dampenForceRepellingBoidsfromOtherBoids)
                 v4.divideby(dampenAveragingVelocityEffect)
+
+                if not boid.isDead:
+                    boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
+                    boid.limit_velocity()
+                    boid.position = sumVectorPosition(boid.position,boid.velocity)
+                print "--------------------"                
                 
-                boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
-                boid.limit_velocity()
-                #boid.velocity = addVectors(v1,v2,v3,v4,v5)
-                #boid.velocity = addVectors(v1)
-                #boid.velocity = v1
-                print "--------------------"
                 
-                
-                boid.position = sumVectorPosition(boid.position,boid.velocity)
+                #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
                 print boid
                 ## p.x = p.x + newX if self.isUniquePoint(Position(p.x + newX,p.y)) else p.x
                 ## p.y = p.y + newY if self.isUniquePoint(Position(p.x,p.y + newY)) else p.y
-                #Kill boids if they outside of the bounds
-                ## if p.x > MAXX or p.y > MAXY or p.x < MINX or p.y < MINY:
-                ##     print "A poor boid died today"
-                ##     self.boidArray.remove(boid)
+
+
         #The last thing that we do in our tick is render the boids.
         #Before we render we choose to wipe the screen blank.
         DISPLAYSURF.fill(WHITE)
         self.drawBoids()
         self.obstacleArray.drawObstacles()
+        
 class Boid(object):
     """ A boid is an independent entity which moves thorugh the world"""
     #Velocity will be in speed/time
     #Orientation starts at 0pi on unit circle and radians
 
-    def __init__(self,velocity=None,position=None):
+    def __init__(self,velocity=None,position=None,isDead=False):
         if position==None:
             x = rand.randrange(MINX,MAXX)
             y = rand.randrange(MINY,MAXY)
@@ -352,6 +405,8 @@ class Boid(object):
             self.velocity = Vector(vx,vy)
         else:
             self.velocity = velocity
+
+        self.isDead = isDead
         
     def __repr__(self):
         return 'I am a boid centered at %d,%d going (%f,%f)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
@@ -362,27 +417,29 @@ class Boid(object):
     def draw_self(self):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
+        if self.isDead:
+            pygame.draw.circle(DISPLAYSURF, DEADBIRDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
+        else:
+            if BIRDSHAPE == "polygonrotate":
+                center = (xRenderPos,yRenderPos)
+                orientation = getOrientationFromVector(self.velocity)
+                tp1 = (step,0)
+                tp2 = (0,step)
+                tp3 = (0,-step)
+                #print "Orientation is %f" %(self.orientation)
+                tp1 = transform(tp1,orientation,center)
+                tp2 = transform(tp2,orientation,center)
+                tp3 = transform(tp3,orientation,center)
+                trianglePoints = (tp1,tp2,tp3)
 
-        if BIRDSHAPE == "polygonrotate":
-            center = (xRenderPos,yRenderPos)
-            orientation = getOrientationFromVector(self.velocity)
-            tp1 = (step,0)
-            tp2 = (0,step)
-            tp3 = (0,-step)
-            #print "Orientation is %f" %(self.orientation)
-            tp1 = transform(tp1,orientation,center)
-            tp2 = transform(tp2,orientation,center)
-            tp3 = transform(tp3,orientation,center)
-            trianglePoints = (tp1,tp2,tp3)
-
-            pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,trianglePoints, CELLSIZE/2)
-        elif BIRDSHAPE == "polygon":
-            pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,\
-                            ((xRenderPos+step,yRenderPos),\
-                            (xRenderPos,yRenderPos+step),\
-                            (xRenderPos,yRenderPos-step)), CELLSIZE/2)
-        elif BIRDSHAPE == "circle":
-            pygame.draw.circle(DISPLAYSURF, BIRDCOLOR,(xRenderPos,yRenderPos), CELLSIZE/2)
+                pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,trianglePoints, CELLSIZE/2)
+            elif BIRDSHAPE == "polygon":
+                pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,\
+                                    ((xRenderPos+step,yRenderPos),\
+                                     (xRenderPos,yRenderPos+step),\
+                                    (xRenderPos,yRenderPos-step)), CELLSIZE/2)
+            elif BIRDSHAPE == "circle":
+                pygame.draw.circle(DISPLAYSURF, BIRDCOLOR,(xRenderPos,yRenderPos), CELLSIZE/2)
 
 
 #main function
@@ -400,17 +457,18 @@ def main():
     #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))    
     #boidArray = BoidArray(BoidInitList = boidInit)
     p = 20
-    radius = 30
-    ## o1 = Obstacle(Position(0,10),radius,GREEN)
-    ## o2 = Obstacle(Position(10,0),radius,DARKGRAY)
-    ## obsticleArray = ObstacleArray([o1,o2])
-    o1 = Obstacle(Position(-p,-p),radius,GREEN)
-    o2 = Obstacle(Position(-p,p),radius,GREEN)
-    o3 = Obstacle(Position(p,p),radius,GREEN)
-    o4 = Obstacle(Position(p,-p),radius,GREEN)
-
+    radius = 5*CELLSIZE
+    
+    ## o1 = Obstacle(Position(-p,-p),radius,GREEN)
+    ## o2 = Obstacle(Position(-p,p),radius,GREEN)
+    ## o3 = Obstacle(Position(p,p),radius,GREEN)
+    ## o4 = Obstacle(Position(p,-p),radius,GREEN)
+    o1 = Obstacle(Position(-40,-10),radius,GREEN)
+    o2 = Obstacle(Position(-30,24),radius,GREEN)
+    o3 = Obstacle(Position(35,40),radius,GREEN)
+    
     ## obsticleArray = ObstacleArray([o1,o3])
-    obsticleArray = ObstacleArray([o1,o4])
+    obsticleArray = ObstacleArray([o1,o2,o3])
     boidArray = BoidArray(ObstacleInitList=obsticleArray)
     #boidArray = BoidArray()
     boidArray.drawBoids()
