@@ -12,7 +12,7 @@ FPS = 25
 
 WINDOWWIDTH = 840
 WINDOWHEIGHT = 680
-isBigWindow = True
+isBigWindow = False
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
@@ -46,23 +46,23 @@ GREEN =    (0,255,0)
 BIRDCOLOR = BLACK
 DEADBIRDCOLOR = RED
 BIRDCOUNT = 20
-BOID_TOLERANCE = 20
-BIRD_TOUCHING_TOLERANCE = 5
+BIRD_FLOCK_VISION_TOLERANCE = 20
+BIRD_TOUCHING_TOLERANCE = 7
 
 COLLISIONAVOIDANCE = 1 # 0 is our original, 1 is from paper
 #Determines how boids avoid obstacles
-MAX_SEE_AHEAD = 20
-MAX_AVOID_FORCE = 3
+MAX_SEE_AHEAD = 15
+MAX_AVOID_FORCE = 20
 
 #Bounds the bird to the window
 FORCE_RETURN_TO_WINDOW = .3
 
 #How much weight it gives to various parts of it's life
 dampenMovementOfAllBoids = 1.00
-dampenMovementTowardsCenter = 30
+dampenMovementTowardsCenter = 100
 dampenForceRepellingBoidsfromOtherBoids = 40
 dampenAveragingVelocityEffect = 30
-dampenWillOfBoidstoDie = 2
+dampenWillOfBoidstoDie = 1
 
 velocityLimit = 1.5
 #This influences how large the boids will be
@@ -293,22 +293,27 @@ class BoidArray(object):
     #
     # ---------------Velocity Model Functions---------
 
-    def getLocalCenter(self,selfboid,tolerance):
-        #Here centerBoid is the boid we are looking to find the local neighborhood of
+    def getVectorToLocalCenter(self, selfboid):
+        #tolerance = BIRD_TOUCHING_TOLERANCE
+        tolerance = BIRD_FLOCK_VISION_TOLERANCE
         cp = selfboid.position
         localBoids = []
         for boid in self.boidArray:
             p = boid.position
             dist = distance(p,cp)
-            isSelf = dist > 0.1
-            if dist < tolerance and isSelf:
+            isNotSelf = dist > 0
+            if dist < tolerance and isNotSelf:
                 localBoids.append(boid)
         if len(localBoids) == 0:
-            centerPoint = Position(0,0,isNull=True)
+            return Vector(0,0)
         else:
             centerPoint = getCenterPoint(localBoids)
-            
-        return centerPoint
+            if centerPoint.isNull:
+                return Vector(0,0)
+            else:
+                return getVectorBetweenPoints(selfboid.position,centerPoint)
+        
+        
 
     def drawBoids(self):
         #draw all live boids
@@ -349,7 +354,8 @@ class BoidArray(object):
                 p = boid.position
                 #v1 is current velocity vector
                 v1 = boid.velocity
-                v2 = self.getVectorToCenter(boid)
+                #v2 = self.getVectorToCenter(boid)
+                v2 = self.getVectorToLocalCenter(boid)
                 v3 = self.getVectorAwayFromBoid(boid)
                 v4 = self.getVelocityOfOthersAround(boid)
                 v5 = self.boundPosition(boid)
@@ -365,7 +371,14 @@ class BoidArray(object):
                 v4.divideby(dampenAveragingVelocityEffect)
 
                 if not boid.isDead:
-                    boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
+                    if v6.magnitude() > 0.3:
+                        boid.velocity = addVectors(v1,v3,v5,v6)
+                        print "Greater than 1"
+                    else:
+                        print v6
+                        #boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
+                        boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
+                        #print "Less than 1"
                     boid.limit_velocity()
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
                 print "--------------------"                
@@ -489,7 +502,7 @@ def main():
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-        #print boidDict[(1,1)]
+        #printbo idDict[(1,1)]
 
 if __name__=='__main__':
     main()

@@ -6,7 +6,7 @@ def getCenterPoint(boidArray):
         count = len(boidArray)
         if count == 0:
             #TODO: FIX THIS
-            return Position(0,0)
+            return Position(0,0,isNull=True)
         for boid in boidArray:
             p = boid.position
             totalX = totalX + p.x
