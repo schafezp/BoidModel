@@ -35,6 +35,7 @@ MINY = -MAXY
 
 MAXVELOCITY = 1.0
 MINVELOCITY = .1
+LIMITVELOCITY = 1.5
 # set up the colours
 BLACK =    (0,  0,  0)
 WHITE =    (255,255,255)
@@ -44,12 +45,12 @@ BLUE =      (0,0,255)
 GREEN =    (0,255,0)
 
 #Configurations
-BIRDCOLOR = BLACK
-DEADBIRDCOLOR = RED
-FRIGHTENEDBIRDCOLOR = BLUE
-BIRDCOUNT = 60
-BIRD_FLOCK_VISION_TOLERANCE = 20
-BIRD_TOUCHING_TOLERANCE = 5
+BOIDCOLOR = BLACK
+DEADBOIDCOLOR = RED
+FRIGHTENEDBOIDCOLOR = BLUE
+BOIDCOUNT = 60
+BOID_FLOCK_VISION_TOLERANCE = 20
+BOID_TOUCHING_TOLERANCE = 5
 DISPLAY_TEXT = True
 #NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 NUMBER_OF_OBSTACLES_TO_GENERATE = 10
@@ -66,8 +67,8 @@ REDUCE_dampenForceRepellingBoidsfromOtherBoids = 0.5
 FRIGHTENED_BOIDS_AFRAID_OF_OBSTACLES = True
 FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES = 3
 
-#this is the BIRD_TOUcHING_TOLERANCE for freightinted boids
-FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BIRD_TOUCHING_TOLERANCE
+#this is the BOID_TOUcHING_TOLERANCE for freightinted boids
+FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BOID_TOUCHING_TOLERANCE
 #FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = 10
 
 #How much more afraid? largr
@@ -75,7 +76,7 @@ FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BIRD_TOUCHING_TOLERANCE
 MAX_SEE_AHEAD = 15
 MAX_AVOID_FORCE = 1
 
-#Bounds the bird to the window
+#Bounds the boid to the window
 FORCE_RETURN_TO_WINDOW = .3
 
 #How much weight it gives to various parts of it's life
@@ -85,15 +86,15 @@ dampenForceRepellingBoidsfromOtherBoids = 40
 dampenAveragingVelocityEffect = 30
 dampenWillOfBoidstoDie = 1
 
-velocityLimit = 1.5
+
 #This influences how large the boids will be
 step = 10
 
 
 #Options are circle or polygon
-#BIRDSHAPE = "circle"
-#BIRDSHAPE = "polygon"
-BIRDSHAPE = "polygonrotate"
+#BOIDSHAPE = "circle"
+#BOIDSHAPE = "polygon"
+BOIDSHAPE = "polygonrotate"
 
 class Position(object):
     def __init__(self,x,y,isNull=False):
@@ -170,13 +171,13 @@ class ObstacleArray(object):
     
 class BoidArray(object):
     """A boid array holds all of the boids which live in the universe """
-    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[],PercentageOfBirdsBornAfraid=0):
+    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[],PercentageOfBoidsBornAfraid=0):
         self.boidArray = []
-        self.numberOfBoids = BIRDCOUNT
+        self.numberOfBoids = BOIDCOUNT
         self.obstacleArray = ObstacleInitList
         self.deadBoids = DeadBoids
-        self.percentageOfBirdsBornAfraid = PercentageOfBirdsBornAfraid
-        self.numberOfFrightenenedBoids = math.ceil(self.numberOfBoids*self.percentageOfBirdsBornAfraid)
+        self.percentageOfBoidsBornAfraid = PercentageOfBoidsBornAfraid
+        self.numberOfFrightenenedBoids = math.ceil(self.numberOfBoids*self.percentageOfBoidsBornAfraid)
 
         if len(BoidInitList) > 0:
             self.boidArray = BoidInitList
@@ -238,11 +239,11 @@ class BoidArray(object):
         v = Vector(0,0)
         #TODO: Maybe this line will run slow because we create lots of new lists
         if selfboid.isEasilyFrightened :
-            bird_toucing_tolerance = FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS 
+            boid_toucing_tolerance = FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS 
         else:
-            bird_toucing_tolerance = BIRD_TOUCHING_TOLERANCE
+            boid_toucing_tolerance = BOID_TOUCHING_TOLERANCE
         for boid in self.getAllBoidsExcept(selfboid):
-            if distance(selfboid.position, boid.position) < bird_toucing_tolerance:
+            if distance(selfboid.position, boid.position) < boid_toucing_tolerance:
                 dispv = vectorSubtract(selfboid.position,boid.position)
                 v = addVectors(v,dispv)
                 
@@ -406,8 +407,8 @@ class BoidArray(object):
     # ---------------Velocity Model Functions---------
 
     def getVectorToLocalCenter(self, selfboid):
-        #tolerance = BIRD_TOUCHING_TOLERANCE
-        tolerance = BIRD_FLOCK_VISION_TOLERANCE
+        #tolerance = BOID_TOUCHING_TOLERANCE
+        tolerance = BOID_FLOCK_VISION_TOLERANCE
         cp = selfboid.position
         localBoids = []
         for boid in self.boidArray:
@@ -484,11 +485,11 @@ class BoidArray(object):
                 v2.divideby(dampenMovementTowardsCenter)
                 
                 if FRIGHTENED_BOIDS_AFRAID_OF_OTHERS:
-                    afraidOfBirds = REDUCE_dampenForceRepellingBoidsfromOtherBoids if boid.isEasilyFrightened else 1
+                    afraidOfBoids = REDUCE_dampenForceRepellingBoidsfromOtherBoids if boid.isEasilyFrightened else 1
                 else:
-                    afraidOfBirds =1
+                    afraidOfBoids =1
                     
-                v3.divideby(dampenForceRepellingBoidsfromOtherBoids*afraidOfBirds)
+                v3.divideby(dampenForceRepellingBoidsfromOtherBoids*afraidOfBoids)
                 v4.divideby(dampenAveragingVelocityEffect)
 
                 if not boid.isDead:
@@ -519,7 +520,7 @@ class BoidArray(object):
         self.obstacleArray.drawObstacles()
         font = pygame.font.SysFont("comicsansms", 30)
         if DISPLAY_TEXT:
-            if self.percentageOfBirdsBornAfraid > 0:
+            if self.percentageOfBoidsBornAfraid > 0:
                 textafraid = font.render("Number of Frightened Boids Alive: "+str(len(self.getFrightened())), 1, (10, 0, 0))
                 textnotafraid = font.render("Number of Not Frightened Boids Alive: "+str(len(self.getNotFrightened())), 1, (10, 0, 0))
                 textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
@@ -562,26 +563,26 @@ class Boid(object):
         return 'I am a boid centered at %d,%d going (%f,%f)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
     def limit_velocity(self):
         vMagnitude = self.velocity.magnitude()
-        if  vMagnitude > velocityLimit:
-            self.velocity = (self.velocity.divideby(vMagnitude)).multiplyby(velocityLimit)
+        if  vMagnitude > LIMITVELOCITY:
+            self.velocity = (self.velocity.divideby(vMagnitude)).multiplyby(LIMITVELOCITY)
     def get_vahead(self,multby):
         return self.velocity.clone().unitize().multiplyby(multby)
     def draw_self(self):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
         if self.isDead:
-            birdcolor = DEADBIRDCOLOR
+            birdcolor = DEADBOIDCOLOR
         if self.isEasilyFrightened :
-            birdcolor = FRIGHTENEDBIRDCOLOR
+            birdcolor = FRIGHTENEDBOIDCOLOR
         elif not self.isDead:
-            birdcolor = BIRDCOLOR
+            birdcolor = BOIDCOLOR
             
             
         if self.isDead:
-            #pygame.draw.circle(DISPLAYSURF, DEADBIRDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
+            #pygame.draw.circle(DISPLAYSURF, DEADBOIDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
             pygame.draw.circle(DISPLAYSURF, birdcolor,(xRenderPos,yRenderPos), 2*CELLSIZE)
         else:
-            if BIRDSHAPE == "polygonrotate":
+            if BOIDSHAPE == "polygonrotate":
                 center = (xRenderPos,yRenderPos)
                 orientation = getOrientationFromVector(self.velocity)
                 tp1 = (step,0)
@@ -594,12 +595,12 @@ class Boid(object):
                 trianglePoints = (tp1,tp2,tp3)
 
                 pygame.draw.polygon(DISPLAYSURF, birdcolor,trianglePoints, CELLSIZE/2)
-            elif BIRDSHAPE == "polygon":
+            elif BOIDSHAPE == "polygon":
                 pygame.draw.polygon(DISPLAYSURF, birdcolor,\
                                     ((xRenderPos+step,yRenderPos),\
                                      (xRenderPos,yRenderPos+step),\
                                     (xRenderPos,yRenderPos-step)), CELLSIZE/2)
-            elif BIRDSHAPE == "circle":
+            elif BOIDSHAPE == "circle":
                 pygame.draw.circle(DISPLAYSURF, birdcolor,(xRenderPos,yRenderPos), CELLSIZE/2)
 
 
@@ -633,7 +634,7 @@ def main():
     oA2 = ObstacleArray(generateObstacles=True)
     
     #boidArray = BoidArray(ObstacleInitList=oA2)
-    boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBirdsBornAfraid=0.5)
+    boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=0.5)
     
     #boidArray = BoidArray()
     boidArray.drawBoids()
