@@ -49,8 +49,14 @@ BOIDCOLOR = BLACK
 DEADBOIDCOLOR = RED
 FRIGHTENEDBOIDCOLOR = BLUE
 BOIDCOUNT = 60
+#Move towards boids in this area
 BOID_FLOCK_VISION_TOLERANCE = 20
-BOID_TOUCHING_TOLERANCE = 5
+#Move away from  boids in this area
+BOID_FLOCK_TOUCHING_TOLERANCE = 5
+
+#this is the BOID_FLOCK_TOUCHING_TOLERANCE for freightinted boids
+FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BOID_FLOCK_TOUCHING_TOLERANCE
+
 DISPLAY_TEXT = True
 #NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 NUMBER_OF_OBSTACLES_TO_GENERATE = 10
@@ -58,43 +64,45 @@ MAX_OBSTACLE_SIZE_TO_GENERATE = (MAXX-MINX)/20*CELLSIZE
 MIN_OBSTACLE_SIZE_TO_GENERATE=(MAXX-MINX)/40*CELLSIZE
 
 COLLISIONAVOIDANCE = 1 # 0 is our original, 1 is from paper
-
+#What percentage of boids are born afraid?
+PERCENTAGE_OF_BOIDS_BORN_AFRAID = 0.5
 #Determines if easilyfrightened boids are afraid of their peers
 FRIGHTENED_BOIDS_AFRAID_OF_OTHERS = False
-#from 0 to 1 based on how more afraid boids are of other others than normal. Smaller numbers more force
-REDUCE_dampenForceRepellingBoidsfromOtherBoids = 0.5
+#Multiplied by the vector which drives boids apart
+FACTOR_FRIGHTENED_BOIDS_AFRAID_OF_OTHERS = 5
 #Determines if easilyfrightened boids are afraid of obstacles
 FRIGHTENED_BOIDS_AFRAID_OF_OBSTACLES = True
 FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES = 3
 
-#this is the BOID_TOUcHING_TOLERANCE for freightinted boids
-FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BOID_TOUCHING_TOLERANCE
+
+
 #FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = 10
 
 #How much more afraid? largr
 #Determines how boids avoid obstacles
-MAX_SEE_AHEAD = 15
+MAX_SEE_AHEAD = 25
 MAX_AVOID_FORCE = 1
 
 #Bounds the boid to the window
 FORCE_RETURN_TO_WINDOW = .3
 
 #How much weight it gives to various parts of it's life
-dampenMovementOfAllBoids = 1.00
-dampenMovementTowardsCenter = 200
-dampenForceRepellingBoidsfromOtherBoids = 40
-dampenAveragingVelocityEffect = 30
-dampenWillOfBoidstoDie = 1
+
+DAMPEN_MOVEMENT_OF_ALL_BOIDS = 1
+DAMPEN_MOVEMENT_TOWARDS_CENTER = 200
+DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS = 40
+DAMPEN_AVERAGING_VELOCITY_EFFECT = 30
+DAMPEN_WILL_OF_BOIDS_TO_DIE = 1
 
 
 #This influences how large the boids will be
-step = 10
+BOID_ANIMATION_SIZE = 10
 
 
 #Options are circle or polygon
-#BOIDSHAPE = "circle"
-#BOIDSHAPE = "polygon"
-BOIDSHAPE = "polygonrotate"
+#BOID_SHAPE = "circle"
+#BOID_SHAPE = "polygon"
+BOID_SHAPE = "polygonrotate"
 
 class Position(object):
     def __init__(self,x,y,isNull=False):
@@ -241,7 +249,7 @@ class BoidArray(object):
         if selfboid.isEasilyFrightened :
             boid_toucing_tolerance = FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS 
         else:
-            boid_toucing_tolerance = BOID_TOUCHING_TOLERANCE
+            boid_toucing_tolerance = BOID_FLOCK_TOUCHING_TOLERANCE
         for boid in self.getAllBoidsExcept(selfboid):
             if distance(selfboid.position, boid.position) < boid_toucing_tolerance:
                 dispv = vectorSubtract(selfboid.position,boid.position)
@@ -298,11 +306,11 @@ class BoidArray(object):
                 dbetween = v.magnitude()
                 #d = (math.exp((MAXX-MINX)/dbetween))
                 #d = (math.exp((MAXX-MINX)/dbetween))
-                #d = dbetween**2
-                d = math.exp(dbetween)
+                d = dbetween**2
+                #d = math.exp(dbetween)
                 print 'dbetween is %f modified d is %f' % (dbetween,d)
-                v = v.multiplyby(dampenWillOfBoidstoDie/d)
-                #v = v.multiplyby(dampenWillOfBoidstoDie/(dbetween*dbetween))
+                v = v.multiplyby(DAMPEN_WILL_OF_BOIDS_TO_DIE/d)
+                #v = v.multiplyby(DAMPEN_WILL_OF_BOIDS_TO_DIE/(dbetween*dbetween))
                 print 'Vector away is %s' %v
         elif COLLISIONAVOIDANCE == 1:
             #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
@@ -365,23 +373,6 @@ class BoidArray(object):
                     v.y = pahead.y - blockingObstacle.position.y 
                 else:
                     v.y = blockingObstacle.position.y - pahead.y  
-                ## if selfboid.position.x > blockingObstacle.position.x:
-                ##     v.x = blockingObstacle.position.x + vahead.x
-                ## else:
-                ##     v.x = vahead.x + blockingObstacle.position.x
-                ## if selfboid.position.y > blockingObstacle.position.y:
-                ##     v.y = blockingObstacle.position.y +  vahead.y 
-                ## else:
-                ##     v.y = vahead.y +  blockingObstacle.position.y
-                ## if selfboid.position.x > blockingObstacle.position.x:
-                ##     v.x = blockingObstacle.position.x - vahead.x
-                ## else:
-                ##     v.x = vahead.x - blockingObstacle.position.x
-                ## if selfboid.position.y > blockingObstacle.position.y:
-                ##     v.y = blockingObstacle.position.y - vahead.y 
-                ## else:
-                ##     v.y = vahead.y - blockingObstacle.position.y
-                #v.x = vahead.x - blockingObstacle.position.x
                 print v.x
                 #v.y = vahead.y - blockingObstacle.position.y
                 print v.y
@@ -407,7 +398,7 @@ class BoidArray(object):
     # ---------------Velocity Model Functions---------
 
     def getVectorToLocalCenter(self, selfboid):
-        #tolerance = BOID_TOUCHING_TOLERANCE
+        #tolerance = BOID_FLOCK_TOUCHING_TOLERANCE
         tolerance = BOID_FLOCK_VISION_TOLERANCE
         cp = selfboid.position
         localBoids = []
@@ -427,7 +418,7 @@ class BoidArray(object):
                 return getVectorBetweenPoints(selfboid.position,centerPoint)
         
     def getMinVectorToWall(self,selfboid):
-        #TODO: Do this
+        #TODO: Implement
         return Vector(0,0)
     
     def drawBoids(self):
@@ -481,36 +472,29 @@ class BoidArray(object):
                 #Apply parameter weightings
                 #print "Vi is"
                 print v1
-                v1.divideby(dampenMovementOfAllBoids)
-                v2.divideby(dampenMovementTowardsCenter)
+                v1.divideby(DAMPEN_MOVEMENT_OF_ALL_BOIDS)
+                v2.divideby(DAMPEN_MOVEMENT_TOWARDS_CENTER)
                 
                 if FRIGHTENED_BOIDS_AFRAID_OF_OTHERS:
-                    afraidOfBoids = REDUCE_dampenForceRepellingBoidsfromOtherBoids if boid.isEasilyFrightened else 1
+                    afraidOfBoids = FACTOR_FRIGHTENED_BOIDS_AFRAID_OF_OTHERS if boid.isEasilyFrightened else 1
                 else:
                     afraidOfBoids =1
                     
-                v3.divideby(dampenForceRepellingBoidsfromOtherBoids*afraidOfBoids)
-                v4.divideby(dampenAveragingVelocityEffect)
-
+                #v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS*afraidOfBoids)
+                v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS).multiplyby(afraidOfBoids)
+                v4.divideby(DAMPEN_AVERAGING_VELOCITY_EFFECT)
                 if not boid.isDead:
-                    if v6.magnitude() > 0.3:
-                        boid.velocity = addVectors(v1,v3,v5,v6)
-                        print "Greater than 1"
-                    else:
-                        print v6
-                        #boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
-                        boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
+                    boid.velocity = addVectors(v1,v2,v3,v4,v5,v6)
                         #print "Less than 1"
                     boid.limit_velocity()
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
+
                 print "--------------------"                
                 
                 
                 #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
                 print boid
-                ## p.x = p.x + newX if self.isUniquePoint(Position(p.x + newX,p.y)) else p.x
-                ## p.y = p.y + newY if self.isUniquePoint(Position(p.x,p.y + newY)) else p.y
 
 
         #The last thing that we do in our tick is render the boids.
@@ -571,37 +555,37 @@ class Boid(object):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
         if self.isDead:
-            birdcolor = DEADBOIDCOLOR
+            boidcolor = DEADBOIDCOLOR
         if self.isEasilyFrightened :
-            birdcolor = FRIGHTENEDBOIDCOLOR
+            boidcolor = FRIGHTENEDBOIDCOLOR
         elif not self.isDead:
-            birdcolor = BOIDCOLOR
+            boidcolor = BOIDCOLOR
             
             
         if self.isDead:
             #pygame.draw.circle(DISPLAYSURF, DEADBOIDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
-            pygame.draw.circle(DISPLAYSURF, birdcolor,(xRenderPos,yRenderPos), 2*CELLSIZE)
+            pygame.draw.circle(DISPLAYSURF, boidcolor,(xRenderPos,yRenderPos), 2*CELLSIZE)
         else:
-            if BOIDSHAPE == "polygonrotate":
+            if BOID_SHAPE == "polygonrotate":
                 center = (xRenderPos,yRenderPos)
                 orientation = getOrientationFromVector(self.velocity)
-                tp1 = (step,0)
-                tp2 = (0,step)
-                tp3 = (0,-step)
+                tp1 = (BOID_ANIMATION_SIZE,0)
+                tp2 = (0,BOID_ANIMATION_SIZE)
+                tp3 = (0,-BOID_ANIMATION_SIZE)
                 #print "Orientation is %f" %(self.orientation)
                 tp1 = transform(tp1,orientation,center)
                 tp2 = transform(tp2,orientation,center)
                 tp3 = transform(tp3,orientation,center)
                 trianglePoints = (tp1,tp2,tp3)
 
-                pygame.draw.polygon(DISPLAYSURF, birdcolor,trianglePoints, CELLSIZE/2)
-            elif BOIDSHAPE == "polygon":
-                pygame.draw.polygon(DISPLAYSURF, birdcolor,\
-                                    ((xRenderPos+step,yRenderPos),\
-                                     (xRenderPos,yRenderPos+step),\
-                                    (xRenderPos,yRenderPos-step)), CELLSIZE/2)
-            elif BOIDSHAPE == "circle":
-                pygame.draw.circle(DISPLAYSURF, birdcolor,(xRenderPos,yRenderPos), CELLSIZE/2)
+                pygame.draw.polygon(DISPLAYSURF, boidcolor,trianglePoints, CELLSIZE/2)
+            elif BOID_SHAPE == "polygon":
+                pygame.draw.polygon(DISPLAYSURF, boidcolor,\
+                                    ((xRenderPos+BOID_ANIMATION_SIZE,yRenderPos),\
+                                     (xRenderPos,yRenderPos+BOID_ANIMATION_SIZE),\
+                                    (xRenderPos,yRenderPos-BOID_ANIMATION_SIZE)), CELLSIZE/2)
+            elif BOID_SHAPE == "circle":
+                pygame.draw.circle(DISPLAYSURF, boidcolor,(xRenderPos,yRenderPos), CELLSIZE/2)
 
 
 #main function
@@ -634,7 +618,7 @@ def main():
     oA2 = ObstacleArray(generateObstacles=True)
     
     #boidArray = BoidArray(ObstacleInitList=oA2)
-    boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=0.5)
+    boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=PERCENTAGE_OF_BOIDS_BORN_AFRAID)
     
     #boidArray = BoidArray()
     boidArray.drawBoids()
