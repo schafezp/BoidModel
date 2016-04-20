@@ -50,6 +50,8 @@ FRIGHTENEDBIRDCOLOR = BLUE
 BIRDCOUNT = 60
 BIRD_FLOCK_VISION_TOLERANCE = 20
 BIRD_TOUCHING_TOLERANCE = 5
+DISPLAY_TEXT = True
+#NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 MAX_OBSTACLE_SIZE_TO_GENERATE = (MAXX-MINX)/20*CELLSIZE
 MIN_OBSTACLE_SIZE_TO_GENERATE=(MAXX-MINX)/40*CELLSIZE
@@ -516,19 +518,19 @@ class BoidArray(object):
         self.drawBoids()
         self.obstacleArray.drawObstacles()
         font = pygame.font.SysFont("comicsansms", 30)
-        
-        if self.percentageOfBirdsBornAfraid > 0:
-            textafraid = font.render("Number of Frightened Boids Alive: "+str(len(self.getFrightened())), 1, (10, 0, 0))
-            textnotafraid = font.render("Number of Not Frightened Boids Alive: "+str(len(self.getNotFrightened())), 1, (10, 0, 0))
-            textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
-            DISPLAYSURF.blit(textafraid,(20, 20))
-            DISPLAYSURF.blit(textnotafraid,(20, 45))
-            DISPLAYSURF.blit(textdead,(20, 65))
-        else:
-            textalive = font.render("Number of Boids Alive: "+str(len(self.boidArray)), 1, (10, 10, 10))
-            textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
-            DISPLAYSURF.blit(textalive,(20,20))
-            DISPLAYSURF.blit(textdead,(20, 45))
+        if DISPLAY_TEXT:
+            if self.percentageOfBirdsBornAfraid > 0:
+                textafraid = font.render("Number of Frightened Boids Alive: "+str(len(self.getFrightened())), 1, (10, 0, 0))
+                textnotafraid = font.render("Number of Not Frightened Boids Alive: "+str(len(self.getNotFrightened())), 1, (10, 0, 0))
+                textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
+                DISPLAYSURF.blit(textafraid,(20, 20))
+                DISPLAYSURF.blit(textnotafraid,(20, 45))
+                DISPLAYSURF.blit(textdead,(20, 65))
+            else:
+                textalive = font.render("Number of Boids Alive: "+str(len(self.boidArray)), 1, (10, 10, 10))
+                textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
+                DISPLAYSURF.blit(textalive,(20,20))
+                DISPLAYSURF.blit(textdead,(20, 45))
         
         
 class Boid(object):
