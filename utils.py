@@ -1,5 +1,7 @@
 import math
-from BoidModel import Position, Boid, Vector
+import random as rand
+
+from BoidModel import Position, Boid, Vector, MAXX, MINX, MAXY,MINY
 def getCenterPoint(boidArray):
         totalX = 0
         totalY = 0
@@ -89,3 +91,5 @@ def getOrientationFromVector(v):
     return math.atan2(v.y,v.x)
 def dotProduct(v1,v2):
     return v1.x*v2.x + v1.y*v2.y
+def randomPosition():
+    return Position(rand.randint(MINX,MAXX),rand.randint(MINY,MAXY))
