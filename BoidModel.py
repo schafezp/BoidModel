@@ -58,8 +58,8 @@ BOID_FLOCK_TOUCHING_TOLERANCE = 5
 FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = BOID_FLOCK_TOUCHING_TOLERANCE
 
 DISPLAY_TEXT = True
-#NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 NUMBER_OF_OBSTACLES_TO_GENERATE = 10
+
 MAX_OBSTACLE_SIZE_TO_GENERATE = (MAXX-MINX)/20*CELLSIZE
 MIN_OBSTACLE_SIZE_TO_GENERATE=(MAXX-MINX)/40*CELLSIZE
 
@@ -72,15 +72,14 @@ FRIGHTENED_BOIDS_AFRAID_OF_OTHERS = False
 FACTOR_FRIGHTENED_BOIDS_AFRAID_OF_OTHERS = 5
 #Determines if easilyfrightened boids are afraid of obstacles
 FRIGHTENED_BOIDS_AFRAID_OF_OBSTACLES = True
-FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES = 3
-
+FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES = 5
+#FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES = 3
 
 
 #FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS = 10
 
-#How much more afraid? largr
 #Determines how boids avoid obstacles
-MAX_SEE_AHEAD = 25
+MAX_SEE_AHEAD = 30
 MAX_AVOID_FORCE = 1
 
 #Bounds the boid to the window
@@ -141,9 +140,9 @@ class Vector(object):
         return self.divideby(self.magnitude())
     def clone(self):
         return Vector(self.x,self.y)
-    def negate(self): 
+    def negate(self):
         return self.multiplyby(-1)
-    
+
 class Obstacle(object):
     def __init__(self,position,radius,color):
         self.position = position
@@ -155,7 +154,7 @@ class Obstacle(object):
         pygame.draw.circle(DISPLAYSURF, self.color,(xRenderPos,yRenderPos), self.radius)
     def positionInObstacle(self,position):
         return distance(position,self.position) <= self.radius/CELLSIZE
-    
+
 class ObstacleArray(object):
     def __init__(self,obstacleArray=[],generateObstacles=False,numtoGenerate=NUMBER_OF_OBSTACLES_TO_GENERATE,minRadius=MIN_OBSTACLE_SIZE_TO_GENERATE,maxRadius=MAX_OBSTACLE_SIZE_TO_GENERATE):
         self.obstacleArray = obstacleArray
@@ -163,7 +162,7 @@ class ObstacleArray(object):
             for i in range(numtoGenerate):
                 o = Obstacle(randomPosition(), rand.randint(minRadius,maxRadius),GREEN)
                 self.obstacleArray.append(o)
-        
+
     def drawObstacles(self):
         for obstacle in self.obstacleArray:
             obstacle.draw_self()
@@ -176,7 +175,7 @@ class ObstacleArray(object):
         return False
     def getObstacles(self):
         return self.obstacleArray
-    
+
 class BoidArray(object):
     """A boid array holds all of the boids which live in the universe """
     def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[],PercentageOfBoidsBornAfraid=0):
@@ -196,17 +195,17 @@ class BoidArray(object):
                     newBoid = Boid(orientation = rand.uniform(0,2*math.pi))
                 else:
                     newBoid = Boid()
-                    
+
                     if i < self.numberOfFrightenenedBoids:
                         isFrightened = True
                     else:
                         isFrightened = False
                     while self.obstacleArray.positionInObstacles(newBoid.position):
                         newBoid = Boid()
-                        
+
                     newBoid.isEasilyFrightened = isFrightened
                 self.boidArray.append(newBoid)
-        
+
 
     def getFrightened(self):
         boids = []
@@ -220,7 +219,7 @@ class BoidArray(object):
             if not boid.isEasilyFrightened:
                 boids.append(boid)
         return boids
-    
+
     def append(self,boid):
         self.boidArray.append(boid)
     def len(self):
@@ -241,20 +240,20 @@ class BoidArray(object):
     def getVectorToCenter(self,boid):
         centerpoint = self.getCenterPointOfAllExcept(boid)
         return getVectorBetweenPoints(boid.position,centerpoint)
-    
+
     def getVectorAwayFromBoid(self,selfboid):
         #v is the vector we will return
         v = Vector(0,0)
         #TODO: Maybe this line will run slow because we create lots of new lists
         if selfboid.isEasilyFrightened :
-            boid_toucing_tolerance = FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS 
+            boid_toucing_tolerance = FRIGHTENED_BOIDS_AVOID_BOIDS_IN_RADIUS
         else:
             boid_toucing_tolerance = BOID_FLOCK_TOUCHING_TOLERANCE
         for boid in self.getAllBoidsExcept(selfboid):
             if distance(selfboid.position, boid.position) < boid_toucing_tolerance:
                 dispv = vectorSubtract(selfboid.position,boid.position)
                 v = addVectors(v,dispv)
-                
+
         return v
 
     def getVelocityOfOthersAround(self,selfboid):
@@ -265,7 +264,7 @@ class BoidArray(object):
 
         if len(otherBoids) == 0:
             return v
-        
+
         v.divideby(len(otherBoids))
         #Add the difference between these velocity vectors
         v = vectorSubtract(v,selfboid.velocity)
@@ -273,7 +272,7 @@ class BoidArray(object):
 
     def boundPosition(self,selfboid):
         v = Vector(0,0)
-        
+
         ## xspan = MAXX-MINX
         ## yspan = MAXY-MINY
         ## if selfboid.position.x < MINX:
@@ -315,13 +314,14 @@ class BoidArray(object):
         elif COLLISIONAVOIDANCE == 1:
             #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
             dynamic_length = selfboid.velocity.magnitude()/MAXVELOCITY
-            dynamic_length = dynamic_length*CELLSIZE*1.5
+            dynamic_length = dynamic_length*CELLSIZE*1.0
             vahead = selfboid.get_vahead(dynamic_length)
             print "Dynamic length is %d" %dynamic_length
             print selfboid.position
+            print "Vahead"
             print vahead
-            print sumVectorPosition(selfboid.position,vahead)
-            
+            #print sumVectorPosition(selfboid.position,vahead)
+
             vahead2 = selfboid.get_vahead(dynamic_length/2)
             vahead3 = selfboid.get_vahead(dynamic_length/6)
             #vahead = selfboid.velocity.clone().unitize().multiplyby(dynamic_length)
@@ -334,7 +334,7 @@ class BoidArray(object):
             pahead3 = sumVectorPosition(selfboid.position,vahead3)
             obstacles = self.obstacleArray.getObstacles()
             blockingObstacles = []
-            
+
             for obstacle in obstacles:
                 if obstacle.positionInObstacle(pahead) or obstacle.positionInObstacle(pahead2) or obstacle.positionInObstacle(pahead3):
                     blockingObstacles.append(obstacle)
@@ -352,9 +352,12 @@ class BoidArray(object):
                         blockingObstacle = obstacle
                         minDistance = d
 
-                paheadInBlocking = obstacle.positionInObstacle(pahead)
-                pahead2InBlocking = obstacle.positionInObstacle(pahead2)
-                pahead3InBlocking = obstacle.positionInObstacle(pahead3)
+                paheadInBlocking = blockingObstacle.positionInObstacle(pahead)
+                pahead2InBlocking = blockingObstacle.positionInObstacle(pahead2)
+                pahead3InBlocking = blockingObstacle.positionInObstacle(pahead3)
+                ## paheadInBlocking = obstacle.positionInObstacle(pahead)
+                ## pahead2InBlocking = obstacle.positionInObstacle(pahead2)
+                ## pahead3InBlocking = obstacle.positionInObstacle(pahead3)
                 closenessFactor = 1
                 if pahead2InBlocking:
                     closenessFactor = 1.5
@@ -364,28 +367,41 @@ class BoidArray(object):
                 if selfboid.isEasilyFrightened and FRIGHTENED_BOIDS_AFRAID_OF_OBSTACLES:
                     #closenessFactor = (closenessFactor+1)**2
                     closenessFactor = closenessFactor*FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES
-                
-                if selfboid.position.x > blockingObstacle.position.x:
-                    v.x = pahead.x - blockingObstacle.position.x 
-                else:
-                    v.x = blockingObstacle.position.x - pahead.x  
-                if selfboid.position.y > blockingObstacle.position.y:
-                    v.y = pahead.y - blockingObstacle.position.y 
-                else:
-                    v.y = blockingObstacle.position.y - pahead.y  
+                #the vector from the obstacle to pahead1
+                chosenpahead = pahead
+                if pahead2InBlocking:
+                    chosenpahead = pahead2
+                elif pahead3InBlocking:
+                    chosenpahead = pahead3
+                    
+                o_to_pahead = getVectorBetweenPoints(blockingObstacle.position, chosenpahead)
+                print "O to pahead"
+                print o_to_pahead
+                #exit()
+                vahead.unitize()
+                o_to_pahead.unitize()
+                v.x = vahead.x + o_to_pahead.x
+                v.y = vahead.y + o_to_pahead.y
+                ## v.x = vahead.x - blockingObstacle.position.x
+                ## v.x = vahead.x - blockingObstacle.position.x
+                ## if selfboid.position.x > blockingObstacle.position.x:
+                ##     v.x = pahead.x - blockingObstacle.position.x
+                ## else:
+                ##     v.x = blockingObstacle.position.x - pahead.x
+                ## if selfboid.position.y > blockingObstacle.position.y:
+                ##     v.y = pahead.y - blockingObstacle.position.y
+                ## else:
+                ##     v.y = blockingObstacle.position.y - pahead.y
                 print v.x
                 #v.y = vahead.y - blockingObstacle.position.y
                 print v.y
-                #v.unitize().multiplyby(MAX_AVOID_FORCE).multiplyby(2*selfboid.velocity.magnitude()/MAXVELOCITY)
-                
-                
                 v.unitize().multiplyby(MAX_AVOID_FORCE*closenessFactor)
                 print "COLLISIONAVOIDANCE v"
                 print v
                 #exit()
-                
-                
-            
+
+
+
         return v
 
 
@@ -416,20 +432,20 @@ class BoidArray(object):
                 return Vector(0,0)
             else:
                 return getVectorBetweenPoints(selfboid.position,centerPoint)
-        
+
     def getMinVectorToWall(self,selfboid):
         #TODO: Implement
         return Vector(0,0)
-    
+
     def drawBoids(self):
         #draw all live boids
         for boid in self.boidArray:
             boid.draw_self()
-            
+
         #draw all dead boids
         for boid in self.deadBoids:
             boid.draw_self()
-            
+
     def isUniquePoint(self,position):
         isUnique = 1
         for boid in self.boidArray:
@@ -474,12 +490,12 @@ class BoidArray(object):
                 print v1
                 v1.divideby(DAMPEN_MOVEMENT_OF_ALL_BOIDS)
                 v2.divideby(DAMPEN_MOVEMENT_TOWARDS_CENTER)
-                
+
                 if FRIGHTENED_BOIDS_AFRAID_OF_OTHERS:
                     afraidOfBoids = FACTOR_FRIGHTENED_BOIDS_AFRAID_OF_OTHERS if boid.isEasilyFrightened else 1
                 else:
                     afraidOfBoids =1
-                    
+
                 #v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS*afraidOfBoids)
                 v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS).multiplyby(afraidOfBoids)
                 v4.divideby(DAMPEN_AVERAGING_VELOCITY_EFFECT)
@@ -489,9 +505,9 @@ class BoidArray(object):
                     boid.limit_velocity()
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
 
-                print "--------------------"                
-                
-                
+                print "--------------------"
+
+
                 #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
                 print boid
@@ -516,8 +532,8 @@ class BoidArray(object):
                 textdead = font.render("Number of Boids Dead: "+str(len(self.deadBoids)), 1, (10, 0, 0))
                 DISPLAYSURF.blit(textalive,(20,20))
                 DISPLAYSURF.blit(textdead,(20, 45))
-        
-        
+
+
 class Boid(object):
     """ A boid is an independent entity which moves thorugh the world"""
     #Velocity will be in speed/time
@@ -542,7 +558,7 @@ class Boid(object):
 
         self.isDead = isDead
         self.isEasilyFrightened=isEasilyFrightened
-        
+
     def __repr__(self):
         return 'I am a boid centered at %d,%d going (%f,%f)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
     def limit_velocity(self):
@@ -560,8 +576,8 @@ class Boid(object):
             boidcolor = FRIGHTENEDBOIDCOLOR
         elif not self.isDead:
             boidcolor = BOIDCOLOR
-            
-            
+
+
         if self.isDead:
             #pygame.draw.circle(DISPLAYSURF, DEADBOIDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
             pygame.draw.circle(DISPLAYSURF, boidcolor,(xRenderPos,yRenderPos), 2*CELLSIZE)
@@ -600,11 +616,11 @@ def main():
     #When no parameters are passed BoidArray is initialized with 15 boids
     #boidArray = BoidArray(SimilarDirection=True)
     boidInit = []
-    #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))    
+    #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))
     #boidArray = BoidArray(BoidInitList = boidInit)
     p = 20
     radius = 20
-    
+
     ## o1 = Obstacle(Position(-p,-p),radius,GREEN)
     ## o2 = Obstacle(Position(-p,p),radius,GREEN)
     ## o3 = Obstacle(Position(p,p),radius,GREEN)
@@ -613,16 +629,16 @@ def main():
     o2 = Obstacle(Position(-30,24),radius,DARKGRAY)
     o3 = Obstacle(Position(35,-20),radius,BLUE)
     oA1 = ObstacleArray([o1,o2,o3])
-    
+
     o4  = Obstacle(Position(-20,-10),radius,GREEN)
     oA2 = ObstacleArray(generateObstacles=True)
-    
+
     #boidArray = BoidArray(ObstacleInitList=oA2)
     boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=PERCENTAGE_OF_BOIDS_BORN_AFRAID)
-    
+
     #boidArray = BoidArray()
     boidArray.drawBoids()
-    
+
 
     pygame.display.update()
     #NumberOfBoids = 15
