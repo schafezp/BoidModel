@@ -9,6 +9,11 @@ from utils import *
 #Number of frames per second
 FPS = 25
 
+#If debug is true then print values
+DEBUG = True
+#PRINT_TRAILS is true then print the trails of the boids instead of redrawing the animation each time
+PRINT_TRAILS = False
+
 ###Sets size of grid
 
 WINDOWWIDTH = 840
@@ -19,7 +24,7 @@ if isBigWindow:
     WINDOWHEIGHT = 1080
 
 CELLSIZE = 10
-CELLSIZE = 8
+#CELLSIZE = 8
 
 #Check to see if the width and height are multiples of the cell size.
 assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell size"
@@ -63,7 +68,7 @@ NUMBER_OF_OBSTACLES_TO_GENERATE = 10
 MAX_OBSTACLE_SIZE_TO_GENERATE = (MAXX-MINX)/20*CELLSIZE
 MIN_OBSTACLE_SIZE_TO_GENERATE=(MAXX-MINX)/40*CELLSIZE
 
-COLLISIONAVOIDANCE = 1 # 0 is our original, 1 is from paper
+COLLISIONAVOIDANCE = 1 # 0 is low quality , 1 is high quality
 #What percentage of boids are born afraid?
 PERCENTAGE_OF_BOIDS_BORN_AFRAID = 0.5
 #Determines if easilyfrightened boids are afraid of their peers
@@ -303,30 +308,27 @@ class BoidArray(object):
                 vToRemove = vbetween.clone().unitize().multiplyby(obstacle.radius/CELLSIZE)
                 v = addVectors(vbetween,vToRemove.negate())
                 dbetween = v.magnitude()
-                #d = (math.exp((MAXX-MINX)/dbetween))
-                #d = (math.exp((MAXX-MINX)/dbetween))
                 d = dbetween**2
+                #possible instead use exp
                 #d = math.exp(dbetween)
-                print 'dbetween is %f modified d is %f' % (dbetween,d)
+                if DEBUG:
+                    print 'dbetween is %f modified d is %f' % (dbetween,d)
                 v = v.multiplyby(DAMPEN_WILL_OF_BOIDS_TO_DIE/d)
-                #v = v.multiplyby(DAMPEN_WILL_OF_BOIDS_TO_DIE/(dbetween*dbetween))
-                print 'Vector away is %s' %v
+                if DEBUG:
+                    print 'Vector away is %s' %v
         elif COLLISIONAVOIDANCE == 1:
-            #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
+            #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777 initially. modified since then
             dynamic_length = selfboid.velocity.magnitude()/MAXVELOCITY
             dynamic_length = dynamic_length*CELLSIZE*1.0
             vahead = selfboid.get_vahead(dynamic_length)
-            print "Dynamic length is %d" %dynamic_length
-            print selfboid.position
-            print "Vahead"
-            print vahead
-            #print sumVectorPosition(selfboid.position,vahead)
+            if DEBUG:
+                print "Dynamic length is %d" %dynamic_length
+                print selfboid.position
+                print "Vahead:"
+                print vahead
 
             vahead2 = selfboid.get_vahead(dynamic_length/2)
             vahead3 = selfboid.get_vahead(dynamic_length/6)
-            #vahead = selfboid.velocity.clone().unitize().multiplyby(dynamic_length)
-            #vahead2 = selfboid.velocity.clone().unitize().multiplyby(dynamic_length/2)
-            #vahead3 = selfboid.velocity.clone().unitize().multiplyby(dynamic_length/6)
             #vahead = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD)
             #vahead2 = selfboid.velocity.clone().unitize().multiplyby(MAX_SEE_AHEAD/2)
             pahead = sumVectorPosition(selfboid.position,vahead)
@@ -369,19 +371,23 @@ class BoidArray(object):
                     closenessFactor = closenessFactor*FACTOR_BOIDS_MORE_AFRAID_OF_OBSTACLES
                 #the vector from the obstacle to pahead1
                 chosenpahead = pahead
+                chosenvahead = vahead
                 if pahead2InBlocking:
                     chosenpahead = pahead2
+                    chosenvahead = vahead2
                 elif pahead3InBlocking:
                     chosenpahead = pahead3
+                    chosenvahead = vahead3
                     
                 o_to_pahead = getVectorBetweenPoints(blockingObstacle.position, chosenpahead)
-                print "O to pahead"
-                print o_to_pahead
-                #exit()
-                vahead.unitize()
+                if DEBUG:
+                    print "O to pahead"
+                    print o_to_pahead
+
+                chosenvahead.unitize()
                 o_to_pahead.unitize()
-                v.x = vahead.x + o_to_pahead.x
-                v.y = vahead.y + o_to_pahead.y
+                v.x = chosenvahead.x + o_to_pahead.x
+                v.y = chosenvahead.y + o_to_pahead.y
                 ## v.x = vahead.x - blockingObstacle.position.x
                 ## v.x = vahead.x - blockingObstacle.position.x
                 ## if selfboid.position.x > blockingObstacle.position.x:
@@ -392,14 +398,11 @@ class BoidArray(object):
                 ##     v.y = pahead.y - blockingObstacle.position.y
                 ## else:
                 ##     v.y = blockingObstacle.position.y - pahead.y
-                print v.x
                 #v.y = vahead.y - blockingObstacle.position.y
-                print v.y
                 v.unitize().multiplyby(MAX_AVOID_FORCE*closenessFactor)
-                print "COLLISIONAVOIDANCE v"
-                print v
-                #exit()
-
+                if DEBUG:
+                    print "COLLISIONAVOIDANCE v"
+                    print v
 
 
         return v
@@ -485,9 +488,6 @@ class BoidArray(object):
                 v7 = self.getMinVectorToWall(boid)
                 #v6 is a heavy wind
                 #v6 = Vector(-0.03,0)
-                #Apply parameter weightings
-                #print "Vi is"
-                print v1
                 v1.divideby(DAMPEN_MOVEMENT_OF_ALL_BOIDS)
                 v2.divideby(DAMPEN_MOVEMENT_TOWARDS_CENTER)
 
@@ -496,7 +496,7 @@ class BoidArray(object):
                 else:
                     afraidOfBoids =1
 
-                #v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS*afraidOfBoids)
+
                 v3.divideby(DAMPEN_FORCE_REPELLING_BOIDS_FROM_OTHER_BOIDS).multiplyby(afraidOfBoids)
                 v4.divideby(DAMPEN_AVERAGING_VELOCITY_EFFECT)
                 if not boid.isDead:
@@ -505,17 +505,20 @@ class BoidArray(object):
                     boid.limit_velocity()
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
 
-                print "--------------------"
+                if DEBUG:
+                    print "--------------------"
 
 
                 #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
-                print boid
+                if DEBUG:
+                    print boid
 
 
         #The last thing that we do in our tick is render the boids.
         #Before we render we choose to wipe the screen blank.
-        DISPLAYSURF.fill(WHITE)
+        if not PRINT_TRAILS:
+            DISPLAYSURF.fill(WHITE)
         self.drawBoids()
         self.obstacleArray.drawObstacles()
         font = pygame.font.SysFont("comicsansms", 30)
@@ -544,7 +547,8 @@ class Boid(object):
             x = rand.randrange(MINX,MAXX)
             y = rand.randrange(MINY,MAXY)
             p = Position(x,y)
-            print p
+            if DEBUG:
+                print p
             self.position = p
         else:
             self.position = position
@@ -613,18 +617,9 @@ def main():
     pygame.display.set_caption('Boid Modeling')
 
     DISPLAYSURF.fill(WHITE)
-    #When no parameters are passed BoidArray is initialized with 15 boids
-    #boidArray = BoidArray(SimilarDirection=True)
+    
     boidInit = []
-    #boidInit.append(Boid(Vector(0.5,0.5),Position(55,15)))
-    #boidArray = BoidArray(BoidInitList = boidInit)
-    p = 20
     radius = 20
-
-    ## o1 = Obstacle(Position(-p,-p),radius,GREEN)
-    ## o2 = Obstacle(Position(-p,p),radius,GREEN)
-    ## o3 = Obstacle(Position(p,p),radius,GREEN)
-    ## o4 = Obstacle(Position(p,-p),radius,GREEN)
     o1 = Obstacle(Position(-20,-10),radius,GREEN)
     o2 = Obstacle(Position(-30,24),radius,DARKGRAY)
     o3 = Obstacle(Position(35,-20),radius,BLUE)
@@ -641,7 +636,6 @@ def main():
 
 
     pygame.display.update()
-    #NumberOfBoids = 15
     while True: #main game loop
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -655,7 +649,6 @@ def main():
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-        #printbo idDict[(1,1)]
 
 if __name__=='__main__':
     main()
