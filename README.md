@@ -2,12 +2,13 @@
 
     Orientation Model
     run
-    '''python
+    ```python
     python BoidModelOrientation.py
-    '''
+    ```
 
     Vector Model
     run
-    '''python
+    ```python
     python BoidModel.py
-    '''
+    ```
+
