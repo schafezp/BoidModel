@@ -158,7 +158,7 @@ class Obstacle(object):
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
         pygame.draw.circle(DISPLAYSURF, self.color,(xRenderPos,yRenderPos), self.radius)
     def positionInObstacle(self,position):
-        return distance(position,self.position) <= self.radius/CELLSIZE
+        return distance(position,self.position) <= self.radius//CELLSIZE
 
 class ObstacleArray(object):
     def __init__(self,obstacleArray=[],generateObstacles=False,numtoGenerate=NUMBER_OF_OBSTACLES_TO_GENERATE,minRadius=MIN_OBSTACLE_SIZE_TO_GENERATE,maxRadius=MAX_OBSTACLE_SIZE_TO_GENERATE):
@@ -196,7 +196,7 @@ class BoidArray(object):
         else:
             for i in range(self.numberOfBoids):
                 if SimilarDirection:
-                    #print "Init with similar direction"
+                    #print ("Init with similar direction")
                     newBoid = Boid(orientation = rand.uniform(0,2*math.pi))
                 else:
                     newBoid = Boid()
@@ -312,20 +312,20 @@ class BoidArray(object):
                 #possible instead use exp
                 #d = math.exp(dbetween)
                 if DEBUG:
-                    print 'dbetween is %f modified d is %f' % (dbetween,d)
+                    print ('dbetween is %f modified d is %f' % (dbetween,d))
                 v = v.multiplyby(DAMPEN_WILL_OF_BOIDS_TO_DIE/d)
                 if DEBUG:
-                    print 'Vector away is %s' %v
+                    print ('Vector away is %s' %v)
         elif COLLISIONAVOIDANCE == 1:
             #from http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777 initially. modified since then
             dynamic_length = selfboid.velocity.magnitude()/MAXVELOCITY
             dynamic_length = dynamic_length*CELLSIZE*1.0
             vahead = selfboid.get_vahead(dynamic_length)
             if DEBUG:
-                print "Dynamic length is %d" %dynamic_length
-                print selfboid.position
-                print "Vahead:"
-                print vahead
+                print ("Dynamic length is %d" %dynamic_length)
+                print (selfboid.position)
+                print ("Vahead:")
+                print (vahead)
 
             vahead2 = selfboid.get_vahead(dynamic_length/2)
             vahead3 = selfboid.get_vahead(dynamic_length/6)
@@ -381,8 +381,8 @@ class BoidArray(object):
                     
                 o_to_pahead = getVectorBetweenPoints(blockingObstacle.position, chosenpahead)
                 if DEBUG:
-                    print "O to pahead"
-                    print o_to_pahead
+                    print ("O to pahead")
+                    print (o_to_pahead)
 
                 chosenvahead.unitize()
                 o_to_pahead.unitize()
@@ -401,8 +401,8 @@ class BoidArray(object):
                 #v.y = vahead.y - blockingObstacle.position.y
                 v.unitize().multiplyby(MAX_AVOID_FORCE*closenessFactor)
                 if DEBUG:
-                    print "COLLISIONAVOIDANCE v"
-                    print v
+                    print ("COLLISIONAVOIDANCE v")
+                    print (v)
 
 
         return v
@@ -506,13 +506,13 @@ class BoidArray(object):
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
 
                 if DEBUG:
-                    print "--------------------"
+                    print ("--------------------")
 
 
                 #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
                 if DEBUG:
-                    print boid
+                    print (boid)
 
 
         #The last thing that we do in our tick is render the boids.
@@ -548,7 +548,7 @@ class Boid(object):
             y = rand.randrange(MINY,MAXY)
             p = Position(x,y)
             if DEBUG:
-                print p
+                print (p)
             self.position = p
         else:
             self.position = position
@@ -592,20 +592,20 @@ class Boid(object):
                 tp1 = (BOID_ANIMATION_SIZE,0)
                 tp2 = (0,BOID_ANIMATION_SIZE)
                 tp3 = (0,-BOID_ANIMATION_SIZE)
-                #print "Orientation is %f" %(self.orientation)
+                #print ("Orientation is %f" %(self.orientation))
                 tp1 = transform(tp1,orientation,center)
                 tp2 = transform(tp2,orientation,center)
                 tp3 = transform(tp3,orientation,center)
                 trianglePoints = (tp1,tp2,tp3)
 
-                pygame.draw.polygon(DISPLAYSURF, boidcolor,trianglePoints, CELLSIZE/2)
+                pygame.draw.polygon(DISPLAYSURF, boidcolor,trianglePoints, CELLSIZE//2)
             elif BOID_SHAPE == "polygon":
                 pygame.draw.polygon(DISPLAYSURF, boidcolor,\
                                     ((xRenderPos+BOID_ANIMATION_SIZE,yRenderPos),\
                                      (xRenderPos,yRenderPos+BOID_ANIMATION_SIZE),\
-                                    (xRenderPos,yRenderPos-BOID_ANIMATION_SIZE)), CELLSIZE/2)
+                                    (xRenderPos,yRenderPos-BOID_ANIMATION_SIZE)), CELLSIZE//2)
             elif BOID_SHAPE == "circle":
-                pygame.draw.circle(DISPLAYSURF, boidcolor,(xRenderPos,yRenderPos), CELLSIZE/2)
+                pygame.draw.circle(DISPLAYSURF, boidcolor,(xRenderPos,yRenderPos), CELLSIZE//2)
 
 
 #main function

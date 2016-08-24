@@ -42,7 +42,7 @@ def transform(xypair,orientation,center):
     ystart = y
     x = xstart*math.cos(orientation) - ystart*math.sin(orientation)
     y = xstart*math.sin(orientation) + ystart*math.cos(orientation)
-    #print "x changed %f y changed %f" %(xstart-x,ystart-y)
+    #print ("x changed %f y changed %f" %(xstart-x,ystart-y))
     return (x+center[0],y+center[1])
 def xycof(boid,MAXX, MAXY):
     #Return a tuple with (xcof,ycof)
@@ -70,10 +70,10 @@ def addVectors(*vs):
     """ Takes a list of vectors and returns their sum as a vector"""
     xsum = 0
     ysum = 0
-    #print "Vs"
-    #print vs
+    #print ("Vs")
+    #print (vs)
     for v in vs:
-        #print v
+        #print (v)
         xsum += v.x
         ysum += v.y
     return Vector(xsum,ysum)
