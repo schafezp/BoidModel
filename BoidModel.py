@@ -19,7 +19,8 @@ PRINT_TRAILS = False
 
 WINDOWWIDTH = 840
 WINDOWHEIGHT = 680
-isBigWindow = True
+#isBigWindow = True
+isBigWindow = False
 if isBigWindow:
     WINDOWWIDTH = 1920
     WINDOWHEIGHT = 1080
