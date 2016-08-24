@@ -102,7 +102,7 @@ DAMPEN_WILL_OF_BOIDS_TO_DIE = 1
 
 
 #This influences how large the boids will be
-BOID_ANIMATION_SIZE = 10
+BOID_ANIMATION_SIZE = 6
 
 
 #Options are circle or polygon
