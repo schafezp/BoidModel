@@ -1,8 +1,9 @@
+import math
+from utils import *
 import pygame, sys
 from pygame.locals import *
 import random as rand
-import math
-from utils import *
+
 
 
 
