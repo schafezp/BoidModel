@@ -138,7 +138,6 @@ class BoidArray(object):
         return avgV/numberOfBoids
 
 
-        return centerPoint
     def getBoidsAround(self,selfBoid,tolerance):
         nearbyeBoids = []
         cp = selfBoid.position
