@@ -264,7 +264,7 @@ class Boid(object):
     def __repr__(self):
         return 'I am a boid centered at %d,%d with orientation %f' %(self.position.x,self.position.y,self.orientation)
     def draw_self(self):
-        #pygame.draw.circle(DISPLAYSURF, BIRDCOLOR, (math.trunc(self.position.x*CELLSIZE), math.trunc(self.position.y*CELLSIZE)), CELLSIZE/2)
+        #pygame.draw.circle(DISPLAYSURF, BIRDCOLOR, (math.trunc(self.position.x*CELLSIZE), math.trunc(self.position.y*CELLSIZE)), CELLSIZE//2)
         xRenderPos = math.trunc(self.position.x*CELLSIZE)
         yRenderPos = math.trunc(self.position.y*CELLSIZE)
 
@@ -280,14 +280,14 @@ class Boid(object):
             tp3 = transform(tp3,self.orientation,center)
             trianglePoints = (tp1,tp2,tp3)
 
-            pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,trianglePoints, CELLSIZE/2)
+            pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,trianglePoints, CELLSIZE//2)
         elif BIRDSHAPE == "polygon":
             pygame.draw.polygon(DISPLAYSURF, BIRDCOLOR,\
                             ((xRenderPos+step,yRenderPos),\
                             (xRenderPos,yRenderPos+step),\
                             (xRenderPos,yRenderPos-step)), CELLSIZE/2)
         elif BIRDSHAPE == "circle":
-            pygame.draw.circle(DISPLAYSURF, BIRDCOLOR,(xRenderPos,yRenderPos), CELLSIZE/2)
+            pygame.draw.circle(DISPLAYSURF, BIRDCOLOR,(xRenderPos,yRenderPos), CELLSIZE//2)
 
 
 #main function
