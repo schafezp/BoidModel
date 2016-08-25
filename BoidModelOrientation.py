@@ -85,7 +85,7 @@ class BoidArray(object):
         else:
             for i in range(self.numberOfBoids):
                 if SimilarDirection:
-                    #print "Init with similar direction"
+                    #print ("Init with similar direction")
                     newBoid = Boid(orientation = rand.uniform(0,2*math.pi))
                 else:
                     newBoid = Boid()
@@ -132,7 +132,7 @@ class BoidArray(object):
 
         numberOfBoids =len(localBoids)
         if numberOfBoids == 0:
-            print "No boids getLocalVelocity"
+            print ("No boids getLocalVelocity")
             return
 
         return avgV/numberOfBoids
@@ -205,15 +205,15 @@ class BoidArray(object):
                     orientationOfAll = self.getOrientationOfAll()
 
                     orientationOfLocal = getOrientationOfBoids(self.getBoidsAround(boid,BIRDTOLERANCE))
-                    print "Orientation around me is %f"%(orientationOfLocal)
+                    print ("Orientation around me is %f"%(orientationOfLocal))
                     totalWeight = weightMoveOriginalOrientation + weightMoveTowardsCenter + weightMoveAwayFromOthers + weightMoveTowardsTotalOrientation + weightMoveTowardsLocalOrientation
                     newOrientation = (weightMoveOriginalOrientation*o + weightMoveTowardsCenter*orientationToCenter + weightMoveAwayFromOthers * orientationAwayFromLocalCenter + weightMoveTowardsTotalOrientation*orientationOfAll + weightMoveTowardsLocalOrientation*orientationOfLocal)/totalWeight
                     #used for going away from walls
                     
-                    print "------------------"
-                    print "New orientation %f" %(newOrientation)
-                    print "Orientation of all %f" % (orientationOfAll)
-                    #print boid
+                    print ("------------------")
+                    print ("New orientation %f" %(newOrientation))
+                    print ("Orientation of all %f" % (orientationOfAll))
+                    #print (boid)
                     boid.orientation = newOrientation
                 if modifyingVelocity:
                     localVelocity = self.getLocalVelocity(boid,BIRDTOLERANCE)
@@ -226,9 +226,9 @@ class BoidArray(object):
                 p.y = p.y + newY if self.isUniquePoint(Position(p.x,p.y + newY)) else p.y
 
 
-                #print boid
+                #print (boid)
                 if p.x > MAXX or p.y > MAXY or p.x < 0 or p.y < 0:
-                    print "A poor boid died today"
+                    print ("A poor boid died today")
                     self.boidArray.remove(boid)
         #The last thing that we do in our tick is render the boids.
         #Before we render we choose to wipe the screen blank.
@@ -250,7 +250,7 @@ class Boid(object):
 
         if velocity==None:
             v = rand.uniform(MINVELOCITY,MAXVELOCITY)
-            print v
+            print (v)
             self.velocity = v
         else:
             self.velocity = velocity
@@ -274,7 +274,7 @@ class Boid(object):
             tp1 = (step,0)
             tp2 = (0,step)
             tp3 = (0,-step)
-            #print "Orientation is %f" %(self.orientation)
+            #print ("Orientation is %f" %(self.orientation))
             tp1 = transform(tp1,self.orientation,center)
             tp2 = transform(tp2,self.orientation,center)
             tp3 = transform(tp3,self.orientation,center)
@@ -329,7 +329,7 @@ def main():
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-        #print boidDict[(1,1)]
+        #print (boidDict[(1,1)])
 
 if __name__=='__main__':
     main()
