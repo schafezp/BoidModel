@@ -566,25 +566,24 @@ class Boid(object):
     #Orientation starts at 0pi on unit circle and radians
 
     def __init__(self,velocity=None,position=None,isDead=False,isEasilyFrightened=False):
+        self.velocity=velocity
+        self.position=position
+        self.isDead=isDead
+        self.isEasilyFrightened=isEasilyFrightened
+        self.color=None
+        
         if position==None:
             x = rand.randrange(MINX,MAXX)
             y = rand.randrange(MINY,MAXY)
             p = Position(x,y)
             if DEBUG:
-                print (p)
+                dblog(p,DEBUG)
             self.position = p
-        else:
-            self.position = position
-
         if velocity==None:
             vx = rand.uniform(MINVELOCITY,MAXVELOCITY)
             vy = rand.uniform(MINVELOCITY,MAXVELOCITY)
             self.velocity = Vector(vx,vy)
-        else:
-            self.velocity = velocity
-
-        self.isDead = isDead
-        self.isEasilyFrightened=isEasilyFrightened
+        
 
     def __repr__(self):
         return 'I am a boid centered at %d,%d going (%f,%f)' %(self.position.x,self.position.y,self.velocity.x,self.velocity.y)
