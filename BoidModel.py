@@ -407,9 +407,8 @@ class BoidArray(object):
                     chosenvahead = vahead3
                     
                 o_to_pahead = getVectorBetweenPoints(blockingObstacle.position, chosenpahead)
-                if DEBUG:
-                    print ("O to pahead")
-                    print (o_to_pahead)
+                dblog("O to pahead",DEBUG)
+                dblog(o_to_pahead,DEBUG)
 
                 chosenvahead.unitize()
                 o_to_pahead.unitize()
@@ -427,11 +426,9 @@ class BoidArray(object):
                 ##     v.y = blockingObstacle.position.y - pahead.y
                 #v.y = vahead.y - blockingObstacle.position.y
                 v.unitize().multiplyby(MAX_AVOID_FORCE*closenessFactor)
-                if DEBUG:
-                    print ("COLLISIONAVOIDANCE v")
-                    print (v)
-
-
+                dblog("COLLISIONAVOIDANCE v",DEBUG)
+                dblog(v,DEBUG)
+                
         return v
 
 
@@ -532,14 +529,11 @@ class BoidArray(object):
                     boid.limit_velocity()
                     boid.position = sumVectorPosition(boid.position,boid.velocity)
 
-                if DEBUG:
-                    print ("--------------------")
-
+                dblog("--------------------",DEBUG)
 
                 #Kill boids if they run into obstacles
                 self.killBoidIfInObstacle(boid)
-                if DEBUG:
-                    print (boid)
+                dblog(boid,DEBUG)
 
 
         #The last thing that we do in our tick is render the boids.
