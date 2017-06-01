@@ -35,6 +35,8 @@ def getOrientationToPosition(positionStart,positionEnd):
 def distance(p1,p2):
         return math.sqrt((p2.y-p1.y)**2 + (p2.x-p1.x)**2)
 
+#Transform is called many times since it run in the tick loop for each alive boid.
+#TODO: consider matrix multiple for transform instead of writing out operations by hand
 def transform(xypair,orientation,center):
     x = xypair[0]
     y = xypair[1]

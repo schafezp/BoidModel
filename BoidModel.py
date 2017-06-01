@@ -127,12 +127,14 @@ BOID_ANIMATION_SIZE = 6
 BOID_SHAPE = "polygonrotate"
 
 class Position(object):
+    #TODO: remove isNull; functions should use None instead of Position
     def __init__(self,x,y,isNull=False):
         self.x = x
         self.y = y
         self.isNull = isNull
     def __repr__(self):
         return "I am a position at (%d,%d)"%(self.x,self.y)
+    #TODO: replace negate w multiply by?
     def negate(self):
         self.x = -self.x
         self.y = -self.y
@@ -611,6 +613,7 @@ class Boid(object):
                 tp2 = (0,BOID_ANIMATION_SIZE)
                 tp3 = (0,-BOID_ANIMATION_SIZE)
                 #print ("Orientation is %f" %(self.orientation))
+                #TODO:Speed test transform function
                 tp1 = transform(tp1,orientation,center)
                 tp2 = transform(tp2,orientation,center)
                 tp3 = transform(tp3,orientation,center)
