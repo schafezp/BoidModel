@@ -5,6 +5,8 @@ from pygame.locals import *
 import random as rand
 #TODO: Implement the following features:
 #Model:
+# run the model on much larger areas (smaller boids) to investigate packing effect without walls
+# Combine influence vectors in a way that boids in the back of the pack can accelerate to catch up without speeding up too fast
 # Make boids not hit walls and if they hit wall they should lose all velocity
 # Make frightened boid model not the default
 # Seek to remove unnecessary constants, all others should be made vectorized for input
@@ -12,6 +14,7 @@ import random as rand
 #UI:
 # Add UI to switch between regular and frightened model
 # Allow click in the ui to add obstacle
+# Allow for larger or smaller UI dimensions as well as smaller boids w bigger world
 
 #Performance:
 # Most complicated operations performed are mults and divs which numpy doesn't make faster
@@ -22,6 +25,7 @@ import random as rand
 #Style:
 # Instead of boids having an isFrightened field instead create class that is a subclass of Boid called FrightenedBoid and use polymorphism to invoke them in the same way
 # Set all class fields with value none at the top of init
+# Use setter and getter methods for all field accesses
 
 
 
