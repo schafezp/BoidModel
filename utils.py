@@ -95,3 +95,9 @@ def dotProduct(v1,v2):
     return v1.x*v2.x + v1.y*v2.y
 def randomPosition():
     return Position(rand.randint(MINX,MAXX),rand.randint(MINY,MAXY))
+
+# log dbug
+def dblog(strn, DEBUG):
+        if DEBUG:
+                print (strn)
+                
