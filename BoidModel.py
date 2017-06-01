@@ -19,6 +19,9 @@ import random as rand
 # Perhaps the rotated polygon can be drawn from it's coordinates directly and shouldn't be transformed
 # Generating random numbers from numpy is fast? http://www.shocksolution.com/2009/01/optimizing-python-code-for-fast-math/
 
+#Style:
+# Instead of boids having an isFrightened field instead create class that is a subclass of Boid called FrightenedBoid and use polymorphism to invoke them in the same way
+# Set all class fields with value none at the top of init
 
 
 
