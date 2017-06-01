@@ -3,6 +3,22 @@ from utils import *
 import pygame, sys
 from pygame.locals import *
 import random as rand
+#TODO: Implement the following features:
+#Model:
+# Make boids not hit walls and if they hit wall they should lose all velocity
+# Make frightened boid model not the default
+# Seek to remove unnecessary constants, all others should be made vectorized for input
+# Train on vectorized coefficients
+#UI:
+# Add UI to switch between regular and frightened model
+# Allow click in the ui to add obstacle
+
+#Performance:
+# Most complicated operations performed are mults and divs which numpy doesn't make faster
+# Consider effect of using numpy matrix for transform required in animating polygons.
+# Perhaps the rotated polygon can be drawn from it's coordinates directly and shouldn't be transformed
+# Generating random numbers from numpy is fast? http://www.shocksolution.com/2009/01/optimizing-python-code-for-fast-math/
+
 
 
 
