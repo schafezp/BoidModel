@@ -124,7 +124,7 @@ DAMPEN_AVERAGING_VELOCITY_EFFECT = 30
 DAMPEN_WILL_OF_BOIDS_TO_DIE = 1
 
 
-#This influences how large the boids will be
+#This influences how large the boids will be drawn
 BOID_ANIMATION_SIZE = 6
 
 
