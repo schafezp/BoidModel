@@ -610,7 +610,6 @@ class Boid(object):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
         boidcolor = self.get_color()
-        print(boidcolor)
 
         if self.isDead:
             #pygame.draw.circle(DISPLAYSURF, DEADBOIDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
