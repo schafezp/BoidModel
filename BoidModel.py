@@ -594,16 +594,23 @@ class Boid(object):
             self.velocity = (self.velocity.divideby(vMagnitude)).multiplyby(LIMITVELOCITY)
     def get_vahead(self,multby):
         return self.velocity.clone().unitize().multiplyby(multby)
+    def get_color(self):
+        if self.color == None:
+            if self.isDead:
+                self.color = DEADBOIDCOLOR
+            if self.isEasilyFrightened :
+                self.color = FRIGHTENEDBOIDCOLOR
+            elif not self.isDead:
+                self.color = BOIDCOLOR
+            return self.color
+        else:
+            return self.color
+        
     def draw_self(self):
         xRenderPos = math.trunc((self.position.x+MAXX)*CELLSIZE)
         yRenderPos = math.trunc((self.position.y+MAXY)*CELLSIZE)
-        if self.isDead:
-            boidcolor = DEADBOIDCOLOR
-        if self.isEasilyFrightened :
-            boidcolor = FRIGHTENEDBOIDCOLOR
-        elif not self.isDead:
-            boidcolor = BOIDCOLOR
-
+        boidcolor = self.get_color()
+        print(boidcolor)
 
         if self.isDead:
             #pygame.draw.circle(DISPLAYSURF, DEADBOIDCOLOR,(xRenderPos,yRenderPos), 2*CELLSIZE)
