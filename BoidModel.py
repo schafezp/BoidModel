@@ -206,7 +206,7 @@ class ObstacleArray(object):
 
 class BoidArray(object):
     """A boid array holds all of the boids which live in the universe """
-    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[],PercentageOfBoidsBornAfraid=0):
+    def __init__(self,SimilarDirection=False,BoidInitList=[],ObstacleInitList=ObstacleArray(),DeadBoids=[],UseAfraidBoids=False,PercentageOfBoidsBornAfraid=0):
         self.boidArray = []
         self.numberOfBoids = BOIDCOUNT
         self.obstacleArray = ObstacleInitList
