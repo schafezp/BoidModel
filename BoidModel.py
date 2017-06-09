@@ -508,6 +508,8 @@ class BoidArray(object):
                 v2 = self.getVectorToLocalCenter(boid)
                 v3 = self.getVectorAwayFromBoid(boid)
                 v4 = self.getVelocityOfOthersAround(boid)
+                #TODO: bound position should overpower other vectors when we get close to the wall.
+                #TODO: make boundPosition return an interval of [0,1] where as it approaches 1 the boid's move away from the wall vector increases
                 v5 = self.boundPosition(boid)
                 v6 = self.getVectorAwayFromObstacles(boid)
                 v7 = self.getMinVectorToWall(boid)
