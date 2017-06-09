@@ -16,6 +16,7 @@ import random as rand
 # Allow click in the ui to add obstacle
 # Allow for larger or smaller UI dimensions as well as smaller boids w bigger world
 # Add support for drawing influence vectors on boids
+# Add support for pausing by pressing space bar
 
 #Performance:
 # Most complicated operations performed are mults and divs which numpy doesn't make faster
@@ -631,6 +632,11 @@ class Boid(object):
                 trianglePoints = (tp1,tp2,tp3)
 
                 pygame.draw.polygon(DISPLAYSURF, boidcolor,trianglePoints, CELLSIZE//2)
+                print(len(self.velocityInfluences))
+                for v in self.velocityInfluences:
+                    start = (xRenderPos,yRenderPos)
+                    end = (xRenderPos + v.x*CELLSIZE*3, yRenderPos + v.y*CELLSIZE*3)
+                    pygame.draw.line(DISPLAYSURF, GREEN,start,end)
             elif BOID_SHAPE == "polygon":
                 pygame.draw.polygon(DISPLAYSURF, boidcolor,\
                                     ((xRenderPos+BOID_ANIMATION_SIZE,yRenderPos),\
@@ -658,24 +664,30 @@ def main():
     oA1 = ObstacleArray([o1,o2,o3])
 
     o4  = Obstacle(Position(-20,-10),radius,GREEN)
-    oA2 = ObstacleArray(generateObstacles=True)
+    # oA2 = ObstacleArray(generateObstacles=True)
 
-    #boidArray = BoidArray(ObstacleInitList=oA2)
-    boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=PERCENTAGE_OF_BOIDS_BORN_AFRAID)
+    boidArray = BoidArray()
+    # boidArray = BoidArray(ObstacleInitList=oA2)
+    # boidArray = BoidArray(ObstacleInitList=oA2,PercentageOfBoidsBornAfraid=PERCENTAGE_OF_BOIDS_BORN_AFRAID)
 
     #boidArray = BoidArray()
     boidArray.drawBoids()
 
 
     pygame.display.update()
+    isAnimationPaused = False
     while True: #main game loop
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
 
-        #runs a tick
-        boidArray.tick()
+        if(pygame.key.get_pressed()[pygame.K_SPACE] != 0):
+            isAnimationPaused = not isAnimationPaused
+
+        if not isAnimationPaused:
+            #runs a tick
+            boidArray.tick()
 
 
         pygame.display.update()
