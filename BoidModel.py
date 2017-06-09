@@ -513,6 +513,7 @@ class BoidArray(object):
                 v5 = self.boundPosition(boid)
                 v6 = self.getVectorAwayFromObstacles(boid)
                 v7 = self.getMinVectorToWall(boid)
+                boid.velocityInfluences = [v1,v2,v3,v4,v5,v6,v7]
                 #v6 is a heavy wind
                 #v6 = Vector(-0.03,0)
                 v1.divideby(DAMPEN_MOVEMENT_OF_ALL_BOIDS)
@@ -567,11 +568,12 @@ class Boid(object):
     #Orientation starts at 0pi on unit circle and radians
 
     def __init__(self,velocity=None,position=None,isDead=False,isEasilyFrightened=False):
-        self.velocity=velocity
-        self.position=position
-        self.isDead=isDead
-        self.isEasilyFrightened=isEasilyFrightened
-        self.color=None
+        self.velocity = velocity
+        self.position = position
+        self.isDead = isDead
+        self.isEasilyFrightened = isEasilyFrightened
+        self.color = None
+        self.velocityInfluences = None
         
         if position==None:
             x = rand.randrange(MINX,MAXX)
