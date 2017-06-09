@@ -15,6 +15,7 @@ import random as rand
 # Add UI to switch between regular and frightened model
 # Allow click in the ui to add obstacle
 # Allow for larger or smaller UI dimensions as well as smaller boids w bigger world
+# Add support for drawing influence vectors on boids
 
 #Performance:
 # Most complicated operations performed are mults and divs which numpy doesn't make faster
